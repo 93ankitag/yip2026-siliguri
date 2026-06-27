@@ -1,0 +1,14 @@
+{
+  "name": "YIP 2026 — Siliguri City Level Round",
+  "short_name": "YIP 2026",
+  "description": "Young Indians Parliament 2026 — Siliguri Chapter Event Management",
+  "start_url": "/yip2026-siliguri.html",
+  "display": "standalone",
+  "background_color": "#1C1C2E",
+  "theme_color": "#E8621A",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
