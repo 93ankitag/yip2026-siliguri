@@ -1060,16 +1060,22 @@ async function load(){
 }
 
 function pushToCloud(){
-  fetch(SYNC_URL,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)})
-    .then(r=>{if(!r.ok)throw new Error(r.status);setSyncStatus('saved');})
-    .catch(()=>setSyncStatus('error'));
+  const body=JSON.stringify(state);
+  fetch(SYNC_URL,{method:'PUT',headers:{'Content-Type':'application/json'},body})
+    .then(r=>{
+      if(!r.ok)return r.text().then(t=>{throw new Error(r.status+': '+t);});
+      setSyncStatus('saved');
+    })
+    .catch(e=>{setSyncStatus('error',e.message);});
 }
 
-function setSyncStatus(s){
+function setSyncStatus(s,msg){
   const el=document.getElementById('sync-status');
   if(!el)return;
-  el.textContent=s==='saved'?'✓ Synced':s==='saving'?'↑ Saving…':'⚠ Sync failed';
-  el.style.color=s==='saved'?'#22c55e':s==='saving'?'#f59e0b':'#ef4444';
+  if(s==='saved'){el.textContent='✓ Synced';el.style.background='#f0fdf4';el.style.color='#16a34a';}
+  else if(s==='saving'){el.textContent='↑ Saving…';el.style.background='#fefce8';el.style.color='#d97706';}
+  else{el.textContent='⚠ '+(msg||'Sync failed');el.style.background='#fef2f2';el.style.color='#dc2626';}
+  el.style.display='inline-block';
 }
 
 function save(){
