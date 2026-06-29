@@ -1041,20 +1041,36 @@ let state = {
   schedSeedVer: 0
 };
 
+const JBIN_ID='6a426488f5f4af5e29415db9';
+const JBIN_KEY='$2a$10$CkseSO40Mt.FaerRwwXjRO38sWuT8XS6lkTWeU6cyM9JBAUSmz6Ka';
+const JBIN_HEADERS={'X-Master-Key':JBIN_KEY,'Content-Type':'application/json','X-Bin-Meta':'false'};
+
 async function load(){
   try{
-    const r=await fetch('/data');
+    const r=await fetch(`https://api.jsonbin.io/v3/b/${JBIN_ID}/latest`,{headers:JBIN_HEADERS});
     if(r.ok){const d=await r.json();Object.assign(state,d);}
   }catch(e){
-    try{const s=localStorage.getItem('yip2026-siliguri');if(s){const d=JSON.parse(s);Object.assign(state,d);}}catch(e2){}
+    try{
+      const r2=await fetch('/data');
+      if(r2.ok){const d=await r2.json();Object.assign(state,d);}
+    }catch(e2){
+      try{const s=localStorage.getItem('yip2026-siliguri');if(s){const d=JSON.parse(s);Object.assign(state,d);}}catch(e3){}
+    }
   }
   seedDefaults();
 }
 
+let _saveTimer=null;
 function save(){
-  fetch('/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)}).catch(()=>{
-    try{localStorage.setItem('yip2026-siliguri',JSON.stringify(state));}catch(e){}
-  });
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(()=>{
+    const body=JSON.stringify(state);
+    fetch(`https://api.jsonbin.io/v3/b/${JBIN_ID}`,{method:'PUT',headers:JBIN_HEADERS,body}).catch(()=>{
+      fetch('/data',{method:'POST',headers:{'Content-Type':'application/json'},body}).catch(()=>{
+        try{localStorage.setItem('yip2026-siliguri',body);}catch(e){}
+      });
+    });
+  },800);
 }
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
