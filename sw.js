@@ -1,4 +1,4 @@
-const CACHE = 'yip2026-v1';
+const CACHE = 'yip2026-v3';
 const CORE = ['/yip2026-siliguri.html', '/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -16,8 +16,8 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Never cache the data endpoint — always go to server
-  if(e.request.url.includes('/data')) return;
+  // Never intercept API or data calls — always go to network
+  if(e.request.url.includes('/api/') || e.request.url.includes('/data')) return;
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
       const clone = resp.clone();
