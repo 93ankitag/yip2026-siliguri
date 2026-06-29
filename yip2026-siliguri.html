@@ -1042,21 +1042,15 @@ let state = {
   schedSeedVer: 0
 };
 
-const JBIN_ID='6a426488f5f4af5e29415db9';
-const JBIN_KEY='$2a$10$CkseSO40Mt.FaerRwwXjRO38sWuT8XS6lkTWeU6cyM9JBAUSmz6Ka';
-const JBIN_GET_HEADERS={'X-Master-Key':JBIN_KEY,'X-Bin-Meta':'false'};
-const JBIN_PUT_HEADERS={'X-Master-Key':JBIN_KEY,'Content-Type':'application/json','X-Bin-Meta':'false'};
+const SYNC_URL='/api/sync';
 const LS_KEY='yip2026-siliguri';
-const LS_TS_KEY='yip2026-siliguri-ts';
 
 async function load(){
   let cloudOk=false;
-  // Always try JSONBin first — it's the source of truth for cross-device sync
   try{
-    const r=await fetch(`https://api.jsonbin.io/v3/b/${JBIN_ID}/latest`,{headers:JBIN_GET_HEADERS});
+    const r=await fetch(SYNC_URL);
     if(r.ok){const d=await r.json();if(d&&typeof d==='object'&&Object.keys(d).length>1){Object.assign(state,d);cloudOk=true;}}
   }catch(e){}
-  // Only fall back to localStorage if JSONBin was unreachable
   if(!cloudOk){
     try{const s=localStorage.getItem(LS_KEY);if(s){const d=JSON.parse(s);Object.assign(state,d);}}catch(e){}
   }
@@ -1064,8 +1058,7 @@ async function load(){
 }
 
 function pushToCloud(){
-  const body=JSON.stringify(state);
-  fetch(`https://api.jsonbin.io/v3/b/${JBIN_ID}`,{method:'PUT',headers:JBIN_PUT_HEADERS,body})
+  fetch(SYNC_URL,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)})
     .then(r=>{if(!r.ok)throw new Error(r.status);setSyncStatus('saved');})
     .catch(()=>setSyncStatus('error'));
 }
@@ -1073,23 +1066,18 @@ function pushToCloud(){
 function setSyncStatus(s){
   const el=document.getElementById('sync-status');
   if(!el)return;
-  el.textContent=s==='saved'?'✓ Synced':'⚠ Sync failed';
-  el.style.color=s==='saved'?'#22c55e':'#ef4444';
-  el.title=s==='saved'?'Data saved to cloud':'Could not save to cloud — check connection';
+  el.textContent=s==='saved'?'✓ Synced':s==='saving'?'↑ Saving…':'⚠ Sync failed';
+  el.style.color=s==='saved'?'#22c55e':s==='saving'?'#f59e0b':'#ef4444';
 }
 
 let _saveTimer=null;
 function save(){
-  // Instantly write to localStorage
-  const body=JSON.stringify({...state,_ts:Date.now()});
-  try{localStorage.setItem(LS_KEY,body);localStorage.setItem(LS_TS_KEY,String(Date.now()));}catch(e){}
-  // Debounce cloud write
+  try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}
   clearTimeout(_saveTimer);
   setSyncStatus('saving');
   _saveTimer=setTimeout(pushToCloud,1500);
 }
 
-// Force cloud save before page unload
 window.addEventListener('beforeunload',()=>{clearTimeout(_saveTimer);pushToCloud();});
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
