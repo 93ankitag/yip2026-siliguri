@@ -1043,12 +1043,13 @@ let state = {
 
 const JBIN_ID='6a426488f5f4af5e29415db9';
 const JBIN_KEY='$2a$10$CkseSO40Mt.FaerRwwXjRO38sWuT8XS6lkTWeU6cyM9JBAUSmz6Ka';
-const JBIN_HEADERS={'X-Master-Key':JBIN_KEY,'Content-Type':'application/json','X-Bin-Meta':'false'};
+const JBIN_GET_HEADERS={'X-Master-Key':JBIN_KEY,'X-Bin-Meta':'false'};
+const JBIN_PUT_HEADERS={'X-Master-Key':JBIN_KEY,'Content-Type':'application/json','X-Bin-Meta':'false'};
 
 async function load(){
   try{
-    const r=await fetch(`https://api.jsonbin.io/v3/b/${JBIN_ID}/latest`,{headers:JBIN_HEADERS});
-    if(r.ok){const d=await r.json();Object.assign(state,d);}
+    const r=await fetch(`https://api.jsonbin.io/v3/b/${JBIN_ID}/latest`,{headers:JBIN_GET_HEADERS});
+    if(r.ok){const d=await r.json();if(d&&typeof d==='object')Object.assign(state,d);}
   }catch(e){
     try{
       const r2=await fetch('/data');
@@ -1065,11 +1066,13 @@ function save(){
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>{
     const body=JSON.stringify(state);
-    fetch(`https://api.jsonbin.io/v3/b/${JBIN_ID}`,{method:'PUT',headers:JBIN_HEADERS,body}).catch(()=>{
-      fetch('/data',{method:'POST',headers:{'Content-Type':'application/json'},body}).catch(()=>{
-        try{localStorage.setItem('yip2026-siliguri',body);}catch(e){}
+    fetch(`https://api.jsonbin.io/v3/b/${JBIN_ID}`,{method:'PUT',headers:JBIN_PUT_HEADERS,body})
+      .then(r=>{if(!r.ok)throw new Error(r.status);})
+      .catch(()=>{
+        fetch('/data',{method:'POST',headers:{'Content-Type':'application/json'},body}).catch(()=>{
+          try{localStorage.setItem('yip2026-siliguri',body);}catch(e){}
+        });
       });
-    });
   },800);
 }
 
