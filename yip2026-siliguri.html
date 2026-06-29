@@ -1072,15 +1072,11 @@ function setSyncStatus(s){
   el.style.color=s==='saved'?'#22c55e':s==='saving'?'#f59e0b':'#ef4444';
 }
 
-let _saveTimer=null;
 function save(){
   try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}
-  clearTimeout(_saveTimer);
   setSyncStatus('saving');
-  _saveTimer=setTimeout(pushToCloud,1500);
+  pushToCloud();
 }
-
-window.addEventListener('beforeunload',()=>{clearTimeout(_saveTimer);pushToCloud();});
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function parseTime(t){
