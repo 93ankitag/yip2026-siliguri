@@ -1050,22 +1050,16 @@ const LS_KEY='yip2026-siliguri';
 const LS_TS_KEY='yip2026-siliguri-ts';
 
 async function load(){
-  let cloudData=null, cloudTs=0;
-  let localData=null, localTs=0;
-  // Try JSONBin
+  let cloudOk=false;
+  // Always try JSONBin first — it's the source of truth for cross-device sync
   try{
     const r=await fetch(`https://api.jsonbin.io/v3/b/${JBIN_ID}/latest`,{headers:JBIN_GET_HEADERS});
-    if(r.ok){const d=await r.json();if(d&&typeof d==='object'){cloudData=d;cloudTs=d._ts||0;}}
+    if(r.ok){const d=await r.json();if(d&&typeof d==='object'&&Object.keys(d).length>1){Object.assign(state,d);cloudOk=true;}}
   }catch(e){}
-  // Try localStorage
-  try{
-    const s=localStorage.getItem(LS_KEY);
-    if(s){localData=JSON.parse(s);localTs=parseInt(localStorage.getItem(LS_TS_KEY)||'0');}
-  }catch(e){}
-  // Use whichever is newer
-  if(localData&&localTs>cloudTs){Object.assign(state,localData);}
-  else if(cloudData){Object.assign(state,cloudData);}
-  else if(localData){Object.assign(state,localData);}
+  // Only fall back to localStorage if JSONBin was unreachable
+  if(!cloudOk){
+    try{const s=localStorage.getItem(LS_KEY);if(s){const d=JSON.parse(s);Object.assign(state,d);}}catch(e){}
+  }
   seedDefaults();
 }
 
