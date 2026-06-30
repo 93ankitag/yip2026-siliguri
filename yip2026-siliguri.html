@@ -233,6 +233,21 @@ textarea{resize:vertical;min-height:80px}
 .issue-card.low{border-left-color:var(--info)}
 .issue-card.resolved{opacity:.6;border-left-color:var(--green)}
 
+/* ── LOGIN ──────────────────────────────────── */
+#login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column}
+#login-screen.hidden{display:none}
+.login-box{background:#fff;border-radius:16px;padding:40px 36px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo img{width:60px}
+.login-title{font-size:22px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px}
+.login-input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;outline:none;transition:border 0.15s}
+.login-input:focus{border-color:var(--saffron)}
+.login-btn{width:100%;padding:13px;background:var(--saffron);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:12px;transition:background 0.15s}
+.login-btn:hover{background:var(--saffron-dark)}
+.login-error{color:var(--danger);font-size:13px;text-align:center;margin-top:10px;min-height:18px}
+.login-tricolor{height:5px;border-radius:0 0 4px 4px;background:linear-gradient(to right,var(--saffron) 33.3%,#fff 33.3% 66.6%,var(--green) 66.6%);margin-bottom:20px}
+
 /* ── PRINT ───────────────────────────────────── */
 @media print{#sidebar,#topbar,.btn,button{display:none!important}.page.active{display:block!important}#main{margin-left:0}#main::before{display:none}}
 
@@ -292,6 +307,18 @@ textarea{resize:vertical;min-height:80px}
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-tricolor"></div>
+    <div class="login-title">YIP 2026 — Siliguri</div>
+    <div class="login-sub">Young Indians Parliament · Event Management</div>
+    <input type="password" id="login-pw" class="login-input" placeholder="Enter team password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Enter</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
 
 <!-- MOBILE HAMBURGER -->
 <button id="mob-hamburger" onclick="toggleSidebar()">☰</button>
@@ -356,6 +383,13 @@ textarea{resize:vertical;min-height:80px}
       <span class="icon">🏗️</span> Operations
     </a>
   </nav>
+    <div class="nav-section">ACCOUNT</div>
+    <a onclick="openModal('changepw-modal')" id="nav-changepw">
+      <span class="icon">🔑</span> Change Password
+    </a>
+    <a onclick="doLogout()" id="nav-logout">
+      <span class="icon">🚪</span> Logout
+    </a>
   <div class="sidebar-footer">YIP 2026 · Siliguri City Level Round</div>
 </div>
 
@@ -2392,14 +2426,110 @@ function addOpTask(depId){
   renderOps();
 }
 
+// ===================== AUTH =====================
+async function sha256(msg){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function isLoggedIn(){return sessionStorage.getItem('yip-auth')==='1';}
+
+async function doLogin(){
+  const pw=document.getElementById('login-pw').value;
+  const err=document.getElementById('login-error');
+  if(!pw){err.textContent='Please enter the password.';return;}
+  const hash=await sha256(pw);
+  const auth=state._auth||{};
+  const teamHash=auth.teamHash||'2f60c4aa9b89032edfb7088007a027aaf1c63719442f1fd8d7b0de4c88cbd423';
+  if(hash===teamHash){
+    sessionStorage.setItem('yip-auth','1');
+    document.getElementById('login-screen').classList.add('hidden');
+    err.textContent='';
+  } else {
+    err.textContent='Incorrect password. Try again.';
+    document.getElementById('login-pw').value='';
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem('yip-auth');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('login-pw').value='';
+  document.getElementById('login-error').textContent='';
+  closeSidebar();
+}
+
+async function saveNewPassword(){
+  const adminPw=document.getElementById('cpw-admin').value;
+  const newPw=document.getElementById('cpw-new').value;
+  const confirmPw=document.getElementById('cpw-confirm').value;
+  const err=document.getElementById('cpw-error');
+
+  if(!adminPw||!newPw||!confirmPw){err.textContent='All fields required.';return;}
+  if(newPw!==confirmPw){err.textContent='New passwords do not match.';return;}
+  if(newPw.length<4){err.textContent='Password must be at least 4 characters.';return;}
+
+  const adminHash=await sha256(adminPw);
+  const auth=state._auth||{};
+  const storedAdminHash=auth.adminHash||'bd9111add2cc2ff49f9391a92e27fe3059d03c66c07c924c8f2800e8a8fbad90';
+
+  if(adminHash!==storedAdminHash){err.textContent='Wrong admin password.';return;}
+
+  const newHash=await sha256(newPw);
+  if(!state._auth)state._auth={};
+  state._auth.teamHash=newHash;
+  save();
+  err.textContent='';
+  closeModal('changepw-modal');
+  document.getElementById('cpw-admin').value='';
+  document.getElementById('cpw-new').value='';
+  document.getElementById('cpw-confirm').value='';
+  alert('Team password updated successfully!');
+}
+
 // ===================== INIT =====================
 async function init(){
   await load();
+  // Show login screen if not authenticated
+  if(!isLoggedIn()){
+    document.getElementById('login-screen').classList.remove('hidden');
+  } else {
+    document.getElementById('login-screen').classList.add('hidden');
+  }
   renderDashboard();
   const _td=document.getElementById("topbar-date");if(_td)_td.textContent=state.event.date||"Date TBD";
   if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 }
 init();
 </script>
+<!-- CHANGE PASSWORD MODAL -->
+<div class="overlay" id="changepw-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3>Change Team Password</h3>
+      <button class="modal-close" onclick="closeModal('changepw-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Admin password required to change team password.</p>
+      <div class="form-group">
+        <label>Admin Password</label>
+        <input type="password" id="cpw-admin" class="form-control" placeholder="Enter admin password">
+      </div>
+      <div class="form-group">
+        <label>New Team Password</label>
+        <input type="password" id="cpw-new" class="form-control" placeholder="New password">
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="cpw-confirm" class="form-control" placeholder="Confirm new password">
+      </div>
+      <div id="cpw-error" style="color:var(--danger);font-size:13px;min-height:18px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('changepw-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewPassword()">Change Password</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
