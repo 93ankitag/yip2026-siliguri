@@ -265,7 +265,30 @@ textarea{resize:vertical;min-height:80px}
   .phase-timeline{grid-template-columns:1fr!important}
   .session-exec-card{padding:12px!important}
   .topbar-date-badge{display:none}
+  .ops-grid{grid-template-columns:1fr!important}
 }
+
+/* ── OPERATIONS ──────────────────────────────── */
+.ops-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:16px}
+.ops-card{background:var(--card);border-radius:10px;border:1px solid var(--border);border-left:4px solid #9E9E9E;padding:16px;display:flex;flex-direction:column;gap:10px}
+.ops-status-pending{border-left-color:#9E9E9E}
+.ops-status-inprogress{border-left-color:var(--saffron)}
+.ops-status-done{border-left-color:var(--green)}
+.ops-card-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ops-dep-icon{font-size:20px;flex-shrink:0}
+.ops-dep-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;flex:1;min-width:80px}
+.ops-card select,.ops-card input[type=text],.ops-card textarea{font-family:'Barlow',sans-serif;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:#fff;color:var(--text)}
+.ops-card select{font-weight:600}
+.ops-task-list{display:flex;flex-direction:column;gap:4px}
+.ops-task{display:flex;align-items:center;gap:6px;font-size:13px}
+.ops-task input[type=checkbox]{width:14px;height:14px;flex-shrink:0;cursor:pointer;accent-color:var(--green)}
+.ops-task-text{flex:1;line-height:1.3}
+.ops-task-text.done{text-decoration:line-through;color:var(--muted-light)}
+.ops-task-del{background:none;border:none;cursor:pointer;color:var(--muted-light);font-size:14px;padding:0 2px;line-height:1;flex-shrink:0}
+.ops-task-del:hover{color:var(--danger)}
+.ops-add-task{display:flex;gap:6px;margin-top:4px}
+.ops-add-task input{flex:1;font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px}
+.ops-summary-bar{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:12px;margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -327,6 +350,10 @@ textarea{resize:vertical;min-height:80px}
     </a>
     <a onclick="showPage('budget')" id="nav-budget">
       <span class="icon">₹</span> Budget &amp; Expenses
+    </a>
+    <div class="nav-section">OPERATIONS</div>
+    <a onclick="showPage('operations')" id="nav-operations">
+      <span class="icon">🏗️</span> Operations
     </a>
   </nav>
   <div class="sidebar-footer">YIP 2026 · Siliguri City Level Round</div>
@@ -705,6 +732,16 @@ textarea{resize:vertical;min-height:80px}
       </table>
     </div>
   </div>
+
+  <!-- OPERATIONS -->
+  <div id="page-operations" class="page">
+    <div class="page-header">
+      <h2>Operations</h2>
+      <p class="page-sub">Department-wise planning and task tracking</p>
+    </div>
+    <div id="ops-summary" class="ops-summary-bar"></div>
+    <div id="ops-grid" class="ops-grid"></div>
+  </div>
 </div>
 
 <!-- MODALS -->
@@ -1041,7 +1078,9 @@ let state = {
   issues: [],
   sessionNotes: {},
   seedVer: 0,
-  schedSeedVer: 0
+  schedSeedVer: 0,
+  opsVer: 0,
+  ops: []
 };
 
 const SYNC_URL='/api/sync';
@@ -1185,6 +1224,131 @@ function seedDefaults(){
     state.checklist=items.map(([task,done,phase,assigned,deadline])=>({id:uid(),task,done,phase,assigned,deadline}));
     state.seedVer=2;
   }
+  if(!state.ops.length || (state.opsVer||0) < 1){
+    state.ops=[
+      {id:'dep-1',name:'Dignitaries',icon:'🎖️',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d1-1',text:'List of MLAs/MPs/VIPs to invite',done:false},
+        {id:'op-d1-2',text:'Draft invitation letter',done:false},
+        {id:'op-d1-3',text:'Send invitations',done:false},
+        {id:'op-d1-4',text:'Confirm attendance',done:false},
+        {id:'op-d1-5',text:'Arrange protocol/seating for VIPs',done:false},
+        {id:'op-d1-6',text:'Coordinate with security if needed',done:false}
+      ]},
+      {id:'dep-2',name:'Catering',icon:'🍽️',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d2-1',text:'Finalize vendor and menu',done:false},
+        {id:'op-d2-2',text:'Confirm headcount per meal',done:false},
+        {id:'op-d2-3',text:'Arrange dietary/special meals',done:false},
+        {id:'op-d2-4',text:'Confirm Day 1 lunch count',done:false},
+        {id:'op-d2-5',text:'Confirm Day 2 lunch count',done:false},
+        {id:'op-d2-6',text:'Confirm refreshments/tea breaks',done:false},
+        {id:'op-d2-7',text:'Confirm payment terms',done:false}
+      ]},
+      {id:'dep-3',name:'Awards & Certificates',icon:'🏆',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d3-1',text:'List all 15 YIP awards',done:false},
+        {id:'op-d3-2',text:'Order trophies/medals',done:false},
+        {id:'op-d3-3',text:'Print certificates for all awards',done:false},
+        {id:'op-d3-4',text:'Print participation certificates for all students',done:false},
+        {id:'op-d3-5',text:'Confirm delivery before event',done:false}
+      ]},
+      {id:'dep-4',name:'Decor & Venue Setup',icon:'🎨',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d4-1',text:'Design stage backdrop (YIP/Yi/CII/Thalir branding)',done:false},
+        {id:'op-d4-2',text:'Order/print backdrop',done:false},
+        {id:'op-d4-3',text:'Arrange flowers and stage decor',done:false},
+        {id:'op-d4-4',text:'Place directional signages',done:false},
+        {id:'op-d4-5',text:'Set up registration desk area',done:false},
+        {id:'op-d4-6',text:'Arrange seating as per plan',done:false}
+      ]},
+      {id:'dep-5',name:'Photography & Videography',icon:'📸',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d5-1',text:'Confirm photographer/videographer',done:false},
+        {id:'op-d5-2',text:'Share shot list (opening, sessions, awards, group photo)',done:false},
+        {id:'op-d5-3',text:'Confirm Day 1 coverage',done:false},
+        {id:'op-d5-4',text:'Confirm Day 2 coverage',done:false},
+        {id:'op-d5-5',text:'Set deadline for photo delivery',done:false},
+        {id:'op-d5-6',text:'Arrange candid coverage of sessions',done:false}
+      ]},
+      {id:'dep-6',name:'Branding — Online',icon:'📱',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d6-1',text:'Create event social media plan',done:false},
+        {id:'op-d6-2',text:'Design event announcement post',done:false},
+        {id:'op-d6-3',text:'Post school participation announcements',done:false},
+        {id:'op-d6-4',text:'Schedule Day 1 live updates',done:false},
+        {id:'op-d6-5',text:'Schedule Day 2 live updates',done:false},
+        {id:'op-d6-6',text:'Post awards/results',done:false},
+        {id:'op-d6-7',text:'Post event recap/reel',done:false}
+      ]},
+      {id:'dep-7',name:'Branding — Offline',icon:'🖨️',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d7-1',text:'Design and print banners',done:false},
+        {id:'op-d7-2',text:'Design and print standees',done:false},
+        {id:'op-d7-3',text:'Print roll-up banners for entry',done:false},
+        {id:'op-d7-4',text:'Print stage backdrop',done:false},
+        {id:'op-d7-5',text:'Print name badges (students/volunteers/jury)',done:false},
+        {id:'op-d7-6',text:'Print constituency cards',done:false}
+      ]},
+      {id:'dep-8',name:'Jury Management',icon:'⚖️',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d8-1',text:'Identify and invite jury members (min 3)',done:false},
+        {id:'op-d8-2',text:'Share YIP evaluation criteria with jury',done:false},
+        {id:'op-d8-3',text:'Brief jury on scoring parameters',done:false},
+        {id:'op-d8-4',text:'Prepare jury evaluation sheets (Day 1)',done:false},
+        {id:'op-d8-5',text:'Prepare jury evaluation sheets (Day 2)',done:false},
+        {id:'op-d8-6',text:'Arrange jury room/seating',done:false},
+        {id:'op-d8-7',text:'Collect signed NDAs/forms',done:false}
+      ]},
+      {id:'dep-9',name:'School & Student Coordination',icon:'🏫',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d9-1',text:'Send invitations to all schools',done:false},
+        {id:'op-d9-2',text:'Collect school confirmation letters/MoUs',done:false},
+        {id:'op-d9-3',text:'Confirm participant count per school',done:false},
+        {id:'op-d9-4',text:'Collect registration fees (₹399/student)',done:false},
+        {id:'op-d9-5',text:'Share YIP topic resources with schools',done:false},
+        {id:'op-d9-6',text:'Conduct Train the Trainer session',done:false},
+        {id:'op-d9-7',text:'Share event schedule with schools',done:false}
+      ]},
+      {id:'dep-10',name:'AV & Technical',icon:'🎙️',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d10-1',text:'Confirm microphones (handheld + lapel)',done:false},
+        {id:'op-d10-2',text:'Confirm projector/screen',done:false},
+        {id:'op-d10-3',text:'Confirm PA/sound system',done:false},
+        {id:'op-d10-4',text:'Test all AV equipment (dry run)',done:false},
+        {id:'op-d10-5',text:'Arrange backup mic',done:false},
+        {id:'op-d10-6',text:'Confirm livestream setup (if any)',done:false},
+        {id:'op-d10-7',text:'Keep tech support on standby both days',done:false}
+      ]},
+      {id:'dep-11',name:'Transport & Logistics',icon:'🚌',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d11-1',text:'Confirm venue accessibility',done:false},
+        {id:'op-d11-2',text:'Arrange parking for buses/cars',done:false},
+        {id:'op-d11-3',text:'Coordinate school bus timings',done:false},
+        {id:'op-d11-4',text:'Arrange transport for jury/dignitaries if needed',done:false},
+        {id:'op-d11-5',text:'Plan emergency transport contact',done:false}
+      ]},
+      {id:'dep-12',name:'Printing & Stationery',icon:'🖨️',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d12-1',text:'Print name badges — students',done:false},
+        {id:'op-d12-2',text:'Print name badges — volunteers and jury',done:false},
+        {id:'op-d12-3',text:'Print constituency cards',done:false},
+        {id:'op-d12-4',text:'Print oath cards',done:false},
+        {id:'op-d12-5',text:'Print YIP rules/format handout',done:false},
+        {id:'op-d12-6',text:'Print jury evaluation sheets',done:false},
+        {id:'op-d12-7',text:'Print Day 1 & Day 2 roll call sheets',done:false},
+        {id:'op-d12-8',text:'Print agenda/schedule cards',done:false}
+      ]},
+      {id:'dep-13',name:'Sponsorship & Finance',icon:'💰',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d13-1',text:'Prepare event budget',done:false},
+        {id:'op-d13-2',text:'Identify potential sponsors',done:false},
+        {id:'op-d13-3',text:'Send sponsorship proposals',done:false},
+        {id:'op-d13-4',text:'Confirm sponsorships/in-kind support',done:false},
+        {id:'op-d13-5',text:'Track all expenses',done:false},
+        {id:'op-d13-6',text:'Arrange petty cash for event day',done:false},
+        {id:'op-d13-7',text:'Settle vendor payments post-event',done:false}
+      ]},
+      {id:'dep-14',name:'Documentation & Reporting',icon:'📋',contact:'',status:'pending',notes:'',tasks:[
+        {id:'op-d14-1',text:'Assign minutes recorder for sessions',done:false},
+        {id:'op-d14-2',text:'Document party formation and portfolios',done:false},
+        {id:'op-d14-3',text:'Collect all jury evaluation sheets',done:false},
+        {id:'op-d14-4',text:'Compile Day 1 scores',done:false},
+        {id:'op-d14-5',text:'Compile Day 2 scores',done:false},
+        {id:'op-d14-6',text:'Prepare post-event report',done:false},
+        {id:'op-d14-7',text:'Archive photos and videos',done:false},
+        {id:'op-d14-8',text:'Submit event data to national YIP portal',done:false}
+      ]}
+    ];
+    state.opsVer=1;
+  }
   if(!state.schedule.length || (state.schedSeedVer||0) < 2){
     const sessions=[
       // Pre-Event
@@ -1273,7 +1437,7 @@ function showPage(p){
   const titles={dashboard:'Dashboard',schools:'Schools & Students',schedule:'Event Schedule',
     volunteers:'Volunteers & Jobs',scoring:'Scoring / Jury',catering:'Catering',
     budget:'Budget & Expenses',checklist:'Master Checklist',leaderboard:'Leaderboard',
-    execution:'Chapter Execution'};
+    execution:'Chapter Execution',operations:'Operations'};
   document.getElementById('page-title').textContent=titles[p]||p;
   renderPage(p);
 }
@@ -1289,6 +1453,7 @@ function renderPage(p){
   else if(p==='checklist')renderChecklist();
   else if(p==='leaderboard')renderLeaderboard();
   else if(p==='execution')renderExecution();
+  else if(p==='operations')renderOps();
 }
 
 // ===================== DASHBOARD =====================
@@ -2122,6 +2287,99 @@ function saveIssue(){
 }
 function resolveIssue(id){const i=(state.issues||[]).find(x=>x.id===id);if(i){i.resolved=true;save();renderIssues();renderExecStats();}}
 function deleteIssue(id){if(!confirm('Delete this issue?'))return;state.issues=(state.issues||[]).filter(i=>i.id!==id);save();renderIssues();}
+
+// ===================== OPERATIONS =====================
+function renderOps(){
+  const deps=state.ops||[];
+  const doneCount=deps.filter(d=>d.status==='done').length;
+  const summary=document.getElementById('ops-summary');
+  if(summary){
+    summary.innerHTML=`<strong style="font-size:15px;font-family:'Barlow Condensed',sans-serif">${doneCount} / ${deps.length}</strong><span style="color:var(--muted);font-size:13px;margin-left:4px">departments marked Done</span>
+    <div class="progress-bar" style="flex:1;margin-left:12px"><div class="fill" style="width:${deps.length?Math.round(doneCount/deps.length*100):0}%;background:var(--green)"></div></div>`;
+  }
+  const grid=document.getElementById('ops-grid');
+  if(!grid)return;
+  grid.innerHTML=deps.map(dep=>{
+    const statusClass=dep.status==='done'?'ops-status-done':dep.status==='inprogress'?'ops-status-inprogress':'ops-status-pending';
+    const doneTasks=dep.tasks.filter(t=>t.done).length;
+    return `<div class="ops-card ${statusClass}" id="ops-card-${dep.id}">
+      <div class="ops-card-header">
+        <span class="ops-dep-icon">${dep.icon}</span>
+        <span class="ops-dep-name">${dep.name}</span>
+        <select onchange="saveOpStatus('${dep.id}',this.value)" style="font-size:11px;padding:4px 6px">
+          <option value="pending" ${dep.status==='pending'?'selected':''}>Pending</option>
+          <option value="inprogress" ${dep.status==='inprogress'?'selected':''}>In Progress</option>
+          <option value="done" ${dep.status==='done'?'selected':''}>Done</option>
+        </select>
+      </div>
+      <div>
+        <input type="text" value="${dep.contact||''}" placeholder="Contact person…" style="width:100%" oninput="saveOpContact('${dep.id}',this.value)">
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:2px">${doneTasks}/${dep.tasks.length} tasks done</div>
+      <div class="ops-task-list">
+        ${dep.tasks.map(t=>`
+          <div class="ops-task">
+            <input type="checkbox" ${t.done?'checked':''} onchange="toggleOpTask('${dep.id}','${t.id}')">
+            <span class="ops-task-text${t.done?' done':''}">${t.text}</span>
+            <button class="ops-task-del" onclick="deleteOpTask('${dep.id}','${t.id}')" title="Delete task">✕</button>
+          </div>`).join('')}
+      </div>
+      <div class="ops-add-task">
+        <input type="text" id="ops-newtask-${dep.id}" placeholder="Add a task…" onkeydown="if(event.key==='Enter')addOpTask('${dep.id}')">
+        <button class="btn btn-primary btn-sm" onclick="addOpTask('${dep.id}')">+</button>
+      </div>
+      <textarea rows="2" placeholder="Notes…" style="width:100%;resize:vertical;font-size:12px" oninput="saveOpNotes('${dep.id}',this.value)">${dep.notes||''}</textarea>
+    </div>`;
+  }).join('');
+}
+
+function saveOpStatus(depId,val){
+  const dep=(state.ops||[]).find(d=>d.id===depId);
+  if(!dep)return;
+  dep.status=val;
+  save();
+  renderOps();
+}
+function saveOpContact(depId,val){
+  const dep=(state.ops||[]).find(d=>d.id===depId);
+  if(!dep)return;
+  dep.contact=val;
+  save();
+}
+function saveOpNotes(depId,val){
+  const dep=(state.ops||[]).find(d=>d.id===depId);
+  if(!dep)return;
+  dep.notes=val;
+  save();
+}
+function toggleOpTask(depId,taskId){
+  const dep=(state.ops||[]).find(d=>d.id===depId);
+  if(!dep)return;
+  const task=dep.tasks.find(t=>t.id===taskId);
+  if(!task)return;
+  task.done=!task.done;
+  save();
+  renderOps();
+}
+function deleteOpTask(depId,taskId){
+  const dep=(state.ops||[]).find(d=>d.id===depId);
+  if(!dep)return;
+  dep.tasks=dep.tasks.filter(t=>t.id!==taskId);
+  save();
+  renderOps();
+}
+function addOpTask(depId){
+  const dep=(state.ops||[]).find(d=>d.id===depId);
+  if(!dep)return;
+  const inp=document.getElementById('ops-newtask-'+depId);
+  if(!inp)return;
+  const text=(inp.value||'').trim();
+  if(!text)return;
+  dep.tasks.push({id:uid(),text,done:false});
+  inp.value='';
+  save();
+  renderOps();
+}
 
 // ===================== INIT =====================
 async function init(){
