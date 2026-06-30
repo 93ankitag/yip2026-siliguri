@@ -1131,14 +1131,29 @@ const SYNC_URL='/api/sync';
 const LS_KEY='yip2026-siliguri';
 
 async function load(){
-  let cloudOk=false;
+  let cloudData=null, localData=null;
+
+  // Load from Supabase
   try{
     const r=await fetch(SYNC_URL);
-    if(r.ok){const d=await r.json();if(d&&typeof d==='object'&&Object.keys(d).length>1){Object.assign(state,d);cloudOk=true;}}
+    if(r.ok){const d=await r.json();if(d&&typeof d==='object'&&Object.keys(d).length>1)cloudData=d;}
   }catch(e){}
-  if(!cloudOk){
-    try{const s=localStorage.getItem(LS_KEY);if(s){const d=JSON.parse(s);Object.assign(state,d);}}catch(e){}
+
+  // Load from localStorage
+  try{const s=localStorage.getItem(LS_KEY);if(s)localData=JSON.parse(s);}catch(e){}
+
+  // Use whichever has MORE schools+students (protects against cloud overwriting newer local data)
+  const cloudScore=(cloudData?.schools?.length||0)+(cloudData?.students?.length||0);
+  const localScore=(localData?.schools?.length||0)+(localData?.students?.length||0);
+
+  if(cloudData&&cloudScore>=localScore){
+    Object.assign(state,cloudData);
+  } else if(localData){
+    Object.assign(state,localData);
+    // Push local data to cloud since it's newer/larger
+    setTimeout(pushToCloud,1000);
   }
+
   seedDefaults();
 }
 
@@ -1157,11 +1172,12 @@ function setSyncStatus(s,msg){
   if(!el)return;
   if(s==='saved'){el.textContent='✓ Synced';el.style.background='#f0fdf4';el.style.color='#16a34a';}
   else if(s==='saving'){el.textContent='↑ Saving…';el.style.background='#fefce8';el.style.color='#d97706';}
-  else{el.textContent='⚠ '+(msg||'Sync failed');el.style.background='#fef2f2';el.style.color='#dc2626';}
+  else{el.textContent='⚠ Not synced — check connection';el.style.background='#fef2f2';el.style.color='#dc2626';}
   el.style.display='inline-block';
 }
 
 function save(){
+  // Always save to localStorage immediately — this is the safety net
   try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}
   setSyncStatus('saving');
   pushToCloud();
