@@ -247,6 +247,7 @@ textarea{resize:vertical;min-height:80px}
   #main{margin-left:0}
   #topbar .topbar-banner{padding-left:56px;flex-wrap:wrap;gap:6px}
   .topbar-actions .btn{display:none}
+  .topbar-actions .btn[onclick="hardRefresh()"]{display:inline-flex!important}
   #sync-status{font-size:13px!important;padding:4px 8px;background:#f0fdf4;border-radius:6px}
   .topbar-event-name{font-size:10px!important}
   .topbar-page-title{font-size:18px!important}
@@ -376,6 +377,7 @@ textarea{resize:vertical;min-height:80px}
       </div>
       <div class="topbar-actions">
         <span id="sync-status" style="font-size:11px;font-weight:600;letter-spacing:.3px;opacity:.8"></span>
+        <button class="btn btn-outline btn-sm" onclick="hardRefresh()" title="Reload latest data &amp; clear cache" style="font-size:16px;padding:4px 10px">⟳</button>
         <button class="btn btn-outline btn-sm" onclick="exportData()">&#8595; Export</button>
         <button class="btn btn-navy btn-sm" onclick="openEventModal()">&#9998; Event Details</button>
         <button class="btn btn-gold btn-sm" onclick="printPage()">&#128438; Print</button>
@@ -2029,6 +2031,16 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // Close on overlay click
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+async function hardRefresh(){
+  if('serviceWorker' in navigator){
+    const regs=await navigator.serviceWorker.getRegistrations();
+    for(const r of regs) await r.unregister();
+    const keys=await caches.keys();
+    for(const k of keys) await caches.delete(k);
+  }
+  location.reload(true);
+}
 
 function exportData(){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
