@@ -389,7 +389,7 @@ textarea{resize:vertical;min-height:80px}
     <a onclick="doLogout()" id="nav-logout">
       <span class="icon">🚪</span> Logout
     </a>
-  <div class="sidebar-footer">YIP 2026 · Siliguri City Level Round</div>
+  <div class="sidebar-footer">YIP 2026 · Siliguri City Level Round<br><span onclick="recoverFromLocal()" style="opacity:0;font-size:8px;cursor:default;user-select:none">.</span></div>
 </div>
 
 <!-- MAIN -->
@@ -410,7 +410,6 @@ textarea{resize:vertical;min-height:80px}
       <div class="topbar-actions">
         <span id="sync-status" style="font-size:11px;font-weight:600;letter-spacing:.3px;opacity:.8"></span>
         <button class="btn btn-outline btn-sm" onclick="hardRefresh()" title="Reload latest data &amp; clear cache" style="font-size:16px;padding:4px 10px">⟳</button>
-        <span onclick="recoverFromLocal()" title="" style="opacity:0;width:8px;height:28px;display:inline-block;cursor:default"></span>
         <button class="btn btn-outline btn-sm" onclick="exportData()">&#8595; Export</button>
         <button class="btn btn-navy btn-sm" onclick="openEventModal()">&#9998; Event Details</button>
         <button class="btn btn-gold btn-sm" onclick="printPage()">&#128438; Print</button>
