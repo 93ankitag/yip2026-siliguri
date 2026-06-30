@@ -470,7 +470,7 @@ textarea{resize:vertical;min-height:80px}
     <div id="schools-tab">
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>School Name</th><th>Contact Teacher</th><th>Phone</th><th>Students</th><th>Constituency</th><th>Actions</th></tr></thead>
+          <thead><tr><th>#</th><th>School Name</th><th>Contact Teacher</th><th>Phone</th><th>Students</th><th>Constituency</th><th>Due / Paid / Balance</th><th>Payment Status</th><th>Actions</th></tr></thead>
           <tbody id="schools-tbody"></tbody>
         </table>
       </div>
@@ -814,6 +814,10 @@ textarea{resize:vertical;min-height:80px}
     <div class="form-group"><label>Email</label><input type="email" id="s-email" placeholder="Email"></div>
     <div class="form-group"><label>Constituency Name (assigned)</label><input type="text" id="s-constituency" placeholder="e.g. Siliguri North"></div>
     <div class="form-group"><label>Number of Students Expected</label><input type="number" id="s-count" placeholder="e.g. 8" min="1"></div>
+    <div class="form-group"><label>Amount Paid (₹)</label><input type="number" id="s-paid" placeholder="e.g. 3192" min="0"></div>
+    <div class="form-group"><label>Payment Mode</label><select id="s-paymode"><option value="">-- Select --</option><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select></div>
+    <div class="form-group"><label>Payment Date</label><input type="date" id="s-paydate"></div>
+    <div class="form-group"><label>Payment Status</label><select id="s-paystatus"><option value="pending">Pending</option><option value="partial">Partial</option><option value="paid">Paid</option></select></div>
     <div class="form-group"><label>Notes</label><textarea id="s-notes" placeholder="Any special notes"></textarea></div>
     </div>
     <div class="modal-footer">
@@ -1558,31 +1562,48 @@ function switchSchoolTab(t){
 
 function renderSchools(){
   const tb=document.getElementById('schools-tbody');
-  if(!state.schools.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No schools added yet</td></tr>';return;}
+  if(!state.schools.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No schools added yet</td></tr>';return;}
+  const FEE=399;
+  let totalDue=0,totalPaid=0;
   tb.innerHTML=state.schools.map((s,i)=>{
     const count=state.students.filter(st=>st.schoolId===s.id).length;
+    const due=(s.count||0)*FEE;
+    const paid=s.paid||0;
+    const bal=due-paid;
+    totalDue+=due;totalPaid+=paid;
+    const ps=s.paystatus||'pending';
+    const psBadge=ps==='paid'?'<span class="badge" style="background:#dcfce7;color:#166534">Paid</span>':ps==='partial'?'<span class="badge" style="background:#fef9c3;color:#854d0e">Partial</span>':'<span class="badge" style="background:#fee2e2;color:#991b1b">Pending</span>';
     return `<tr>
       <td>${i+1}</td>
       <td><strong>${s.name}</strong></td>
       <td>${s.teacher||'-'}</td>
       <td>${s.phone||'-'}</td>
-      <td><span class="badge badge-blue">${count} students</span></td>
+      <td><span class="badge badge-blue">${count}/${s.count||0} students</span></td>
       <td>${s.constituency||'-'}</td>
+      <td>₹${due.toLocaleString()} / <span style="color:var(--green);font-weight:700">₹${paid.toLocaleString()}</span>${bal>0?` / <span style="color:var(--danger)">₹${bal.toLocaleString()} due</span>`:''}</td>
+      <td>${psBadge}${s.paymode?`<br><small style="color:var(--muted)">${s.paymode}${s.paydate?' · '+s.paydate:''}</small>`:''}</td>
       <td><button class="btn btn-outline btn-xs" onclick="editSchool('${s.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteSchool('${s.id}')">Del</button></td>
     </tr>`;
   }).join('');
+  // Payment summary row
+  const bal=totalDue-totalPaid;
+  tb.innerHTML+=`<tr style="background:#f8fafc;font-weight:700;border-top:2px solid var(--border)">
+    <td colspan="6" style="text-align:right;padding:10px 8px">TOTAL</td>
+    <td>₹${totalDue.toLocaleString()} / <span style="color:var(--green)">₹${totalPaid.toLocaleString()}</span>${bal>0?` / <span style="color:var(--danger)">₹${bal.toLocaleString()} due</span>`:' ✓'}</td>
+    <td colspan="2"></td>
+  </tr>`;
 }
 
 function openSchoolModal(id){
   document.getElementById('school-modal-title').textContent=id?'Edit School':'Add School';
-  if(id){const s=state.schools.find(x=>x.id===id);if(s){document.getElementById('school-id').value=s.id;document.getElementById('s-name').value=s.name||'';document.getElementById('s-teacher').value=s.teacher||'';document.getElementById('s-phone').value=s.phone||'';document.getElementById('s-email').value=s.email||'';document.getElementById('s-constituency').value=s.constituency||'';document.getElementById('s-count').value=s.count||'';document.getElementById('s-notes').value=s.notes||'';}}
-  else{['school-id','s-name','s-teacher','s-phone','s-email','s-constituency','s-count','s-notes'].forEach(id=>document.getElementById(id).value='');}
+  if(id){const s=state.schools.find(x=>x.id===id);if(s){document.getElementById('school-id').value=s.id;document.getElementById('s-name').value=s.name||'';document.getElementById('s-teacher').value=s.teacher||'';document.getElementById('s-phone').value=s.phone||'';document.getElementById('s-email').value=s.email||'';document.getElementById('s-constituency').value=s.constituency||'';document.getElementById('s-count').value=s.count||'';document.getElementById('s-notes').value=s.notes||'';document.getElementById('s-paid').value=s.paid||'';document.getElementById('s-paymode').value=s.paymode||'';document.getElementById('s-paydate').value=s.paydate||'';document.getElementById('s-paystatus').value=s.paystatus||'pending';}}
+  else{['school-id','s-name','s-teacher','s-phone','s-email','s-constituency','s-count','s-notes','s-paid','s-paymode','s-paydate'].forEach(id=>document.getElementById(id).value='');document.getElementById('s-paystatus').value='pending';}
   openModal('school-modal');
 }
 function editSchool(id){openSchoolModal(id);}
 function saveSchool(){
   const id=document.getElementById('school-id').value||uid();
-  const s={id,name:v('s-name'),teacher:v('s-teacher'),phone:v('s-phone'),email:v('s-email'),constituency:v('s-constituency'),count:+v('s-count')||0,notes:v('s-notes')};
+  const s={id,name:v('s-name'),teacher:v('s-teacher'),phone:v('s-phone'),email:v('s-email'),constituency:v('s-constituency'),count:+v('s-count')||0,notes:v('s-notes'),paid:+v('s-paid')||0,paymode:v('s-paymode'),paydate:v('s-paydate'),paystatus:document.getElementById('s-paystatus').value||'pending'};
   const idx=state.schools.findIndex(x=>x.id===id);
   if(idx>=0)state.schools[idx]=s; else state.schools.push(s);
   save();renderSchools();closeModal('school-modal');updateStudentSchoolSelects();
