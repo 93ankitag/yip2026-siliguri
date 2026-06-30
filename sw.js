@@ -1,4 +1,4 @@
-const CACHE = 'yip2026-v3';
+const CACHE = 'yip2026-v4';
 const CORE = ['/yip2026-siliguri.html', '/manifest.json'];
 
 self.addEventListener('install', e => {
