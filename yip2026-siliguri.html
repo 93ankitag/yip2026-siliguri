@@ -475,7 +475,7 @@ textarea{resize:vertical;min-height:80px}
       </div>
     </div>
     <div id="students-tab" style="display:none">
-      <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
         <input type="text" placeholder="Search by name or school..." id="student-search" oninput="renderStudents()" style="max-width:280px">
         <select id="student-filter-school" onchange="renderStudents()" style="max-width:200px">
           <option value="">All Schools</option>
@@ -490,6 +490,11 @@ textarea{resize:vertical;min-height:80px}
           <option>Whip</option>
           <option>Other</option>
         </select>
+        <button id="master-edit-btn" class="btn btn-outline btn-sm" onclick="toggleMasterEdit()" style="margin-left:auto">✏️ Master Edit</button>
+      </div>
+      <div id="master-edit-banner" style="display:none;background:#fff3e0;border:1px solid #e65100;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px;color:#e65100;font-weight:600">
+        ✏️ Master Edit ON — click any cell to edit. Changes save automatically.
+        <button class="btn btn-sm" style="margin-left:12px;background:#e65100;color:#fff" onclick="toggleMasterEdit()">Done Editing</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -1620,6 +1625,23 @@ function updateStudentSchoolSelects(){
   });
 }
 
+let _masterEdit=false;
+function toggleMasterEdit(){
+  _masterEdit=!_masterEdit;
+  const btn=document.getElementById('master-edit-btn');
+  const banner=document.getElementById('master-edit-banner');
+  if(btn)btn.style.background=_masterEdit?'#e65100':'';
+  if(btn)btn.style.color=_masterEdit?'#fff':'';
+  if(banner)banner.style.display=_masterEdit?'block':'none';
+  renderStudents();
+}
+function inlineUpdateStudent(id,field,val){
+  const s=state.students.find(x=>x.id===id);
+  if(!s)return;
+  s[field]=val;
+  if(field==='schoolId'){const sc=state.schools.find(x=>x.id===val);s.schoolName=sc?sc.name:'';}
+  save();
+}
 function renderStudents(){
   updateStudentSchoolSelects();
   const search=(document.getElementById('student-search')?.value||'').toLowerCase();
@@ -1632,16 +1654,34 @@ function renderStudents(){
   const tb=document.getElementById('students-tbody');
   if(!students.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No students found</td></tr>';return;}
   const roleColors={'PM Candidate':'badge-gold','Minister':'badge-blue','MP - Ruling':'badge-green','MP - Opposition':'badge-red','Speaker':'badge-blue','Whip':'badge-gray','Other':'badge-gray'};
-  tb.innerHTML=students.map((s,i)=>`<tr>
-    <td>${i+1}</td>
-    <td><strong>${s.name}</strong></td>
-    <td>${s.schoolName||'-'}</td>
-    <td>${s.class||'-'}</td>
-    <td>${s.constituency||'-'}</td>
-    <td><span class="badge ${roleColors[s.role]||'badge-gray'}">${s.role||'-'}</span></td>
-    <td>${s.party||'-'}</td>
-    <td><button class="btn btn-outline btn-xs" onclick="editStudent('${s.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteStudent('${s.id}')">Del</button></td>
-  </tr>`).join('');
+  const roles=['PM Candidate','Minister','MP - Ruling','MP - Opposition','Speaker','Whip','Other'];
+  const schoolOpts=state.schools.map(sc=>`<option value="${sc.id}">${sc.name}</option>`).join('');
+  const roleOpts=roles.map(r=>`<option>${r}</option>`).join('');
+  const inpStyle='width:100%;border:1px solid #e0e0e0;border-radius:4px;padding:3px 6px;font-size:12px;font-family:inherit';
+  tb.innerHTML=students.map((s,i)=>{
+    if(_masterEdit){
+      return `<tr style="background:#fffbf5">
+        <td>${i+1}</td>
+        <td><input style="${inpStyle}" value="${s.name||''}" onchange="inlineUpdateStudent('${s.id}','name',this.value)"></td>
+        <td><select style="${inpStyle}" onchange="inlineUpdateStudent('${s.id}','schoolId',this.value)"><option value="">--</option>${state.schools.map(sc=>`<option value="${sc.id}"${sc.id===s.schoolId?' selected':''}>${sc.name}</option>`).join('')}</select></td>
+        <td><input style="${inpStyle};width:80px" value="${s.class||''}" onchange="inlineUpdateStudent('${s.id}','class',this.value)"></td>
+        <td><input style="${inpStyle}" value="${s.constituency||''}" onchange="inlineUpdateStudent('${s.id}','constituency',this.value)"></td>
+        <td><select style="${inpStyle}" onchange="inlineUpdateStudent('${s.id}','role',this.value)">${roles.map(r=>`<option${r===s.role?' selected':''}>${r}</option>`).join('')}</select></td>
+        <td><input style="${inpStyle}" value="${s.party||''}" onchange="inlineUpdateStudent('${s.id}','party',this.value)"></td>
+        <td><button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteStudent('${s.id}')">Del</button></td>
+      </tr>`;
+    }
+    return `<tr>
+      <td>${i+1}</td>
+      <td><strong>${s.name}</strong></td>
+      <td>${s.schoolName||'-'}</td>
+      <td>${s.class||'-'}</td>
+      <td>${s.constituency||'-'}</td>
+      <td><span class="badge ${roleColors[s.role]||'badge-gray'}">${s.role||'-'}</span></td>
+      <td>${s.party||'-'}</td>
+      <td><button class="btn btn-outline btn-xs" onclick="editStudent('${s.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteStudent('${s.id}')">Del</button></td>
+    </tr>`;
+  }).join('');
 }
 
 function openStudentModal(id){
