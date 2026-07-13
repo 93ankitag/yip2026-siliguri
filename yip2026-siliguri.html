@@ -638,6 +638,46 @@ textarea{resize:vertical;min-height:80px}
       Day 2: Question Hour (10) + Zero Hour (10) + Committee Disc. (10) = 30 pts &nbsp;|&nbsp;
       Grand Total: 60 pts per jury → Leaderboard shows average across all juries.
     </div>
+    <!-- Scoring Guide -->
+    <div style="margin-bottom:12px">
+      <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent.includes('▶')?'▼ Hide Scoring Guide':'▶ Show Scoring Guide'" style="background:none;border:none;color:var(--navy);font-size:13px;font-weight:700;cursor:pointer;padding:0">▶ Show Scoring Guide</button>
+      <div style="display:none;margin-top:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+          <!-- Day 1 -->
+          <div style="padding:14px 16px;border-right:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--saffron);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Day 1 Criteria</div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">Govt Formation /10</div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Political Acumen &amp; Negotiation <span style="color:var(--muted)">(4)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Coalition Building <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:10px">• Leadership &amp; Initiative <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">MUPI /10</div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Research &amp; Understanding <span style="color:var(--muted)">(4)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Argument Quality <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:10px">• Communication <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">Committee Prep /10</div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Research Contribution <span style="color:var(--muted)">(4)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Participation <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;color:var(--text)">• Team Collaboration <span style="color:var(--muted)">(3)</span></div>
+          </div>
+          <!-- Day 2 -->
+          <div style="padding:14px 16px">
+            <div style="font-size:11px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Day 2 Criteria</div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">Question Hour /10</div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Quality of Questions <span style="color:var(--muted)">(4)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Research &amp; Relevance <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:10px">• Supplementaries <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">Zero Hour /10</div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Issue Selection <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Constituency Relevance <span style="color:var(--muted)">(4)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:10px">• Presentation <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">Committee Discussion /10</div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Policy Understanding <span style="color:var(--muted)">(4)</span></div>
+            <div style="font-size:12px;color:var(--text);margin-bottom:2px">• Participation <span style="color:var(--muted)">(3)</span></div>
+            <div style="font-size:12px;color:var(--text)">• Problem Solving <span style="color:var(--muted)">(3)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Jury selector -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
