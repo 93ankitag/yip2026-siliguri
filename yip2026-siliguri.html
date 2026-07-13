@@ -626,16 +626,25 @@ textarea{resize:vertical;min-height:80px}
   <div id="page-scoring" class="page">
     <div class="section-header">
       <h3>Jury Scoring Sheet</h3>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="switchScoringDay(1)" id="sd1-btn">Day 1</button>
         <button class="btn btn-navy btn-sm" onclick="switchScoringDay(2)" id="sd2-btn">Day 2</button>
+        <button class="btn btn-outline btn-sm" onclick="openJuryModal()">⚖️ Manage Juries</button>
         <button class="btn btn-gold btn-sm" onclick="printPage()">Print Scores</button>
       </div>
     </div>
-    <div class="alert alert-info" style="margin-bottom:16px">
-      Day 1: Government Formation (10) + MUPI (10) + Committee Prep (10) = 30 pts &nbsp;|&nbsp;
-      Day 2: Question Hour (10) + Zero Hour (10) + Committee Discussion (10) = 30 pts &nbsp;|&nbsp;
-      Grand Total: 60 pts
+    <div class="alert alert-info" style="margin-bottom:12px">
+      Day 1: Govt Formation (10) + MUPI (10) + Committee Prep (10) = 30 pts &nbsp;|&nbsp;
+      Day 2: Question Hour (10) + Zero Hour (10) + Committee Disc. (10) = 30 pts &nbsp;|&nbsp;
+      Grand Total: 60 pts per jury → Leaderboard shows average across all juries.
+    </div>
+    <!-- Jury selector -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Scoring as:</span>
+        <div id="jury-tabs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <div id="jury-active-info" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
     </div>
     <div id="scoring-day1">
       <div class="table-wrap">
@@ -673,7 +682,7 @@ textarea{resize:vertical;min-height:80px}
     </div>
     <div style="margin-top:16px;display:flex;gap:10px">
       <button class="btn btn-primary" onclick="saveScores()">Save Scores</button>
-      <button class="btn btn-outline" onclick="showPage('leaderboard')">View Leaderboard</button>
+      <button class="btn btn-outline" onclick="showPage('leaderboard')">View Leaderboard →</button>
     </div>
   </div>
 
@@ -939,6 +948,25 @@ textarea{resize:vertical;min-height:80px}
   </div>
 </div>
 
+<!-- Jury Modal -->
+<div class="overlay" id="jury-modal">
+  <div class="modal">
+    <div class="modal-header"><h3>Manage Jury Members</h3><button class="modal-close" onclick="closeModal('jury-modal')">✕</button></div>
+    <div style="margin-bottom:16px">
+      <div id="jury-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">ADD JURY MEMBER</div>
+        <div class="form-row">
+          <div class="form-group"><label>Name</label><input type="text" id="jury-name-input" placeholder="e.g. Ramesh Kumar"></div>
+          <div class="form-group"><label>Designation</label><input type="text" id="jury-desig-input" placeholder="e.g. Principal, DPS Siliguri"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addJury()">Add Jury Member</button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('jury-modal')">Close</button></div>
+  </div>
+</div>
+
 <!-- Job Modal -->
 <div class="overlay" id="job-modal">
   <div class="modal">
@@ -1194,6 +1222,18 @@ function parseTime(t){
 }
 
 function seedDefaults(){
+  if(!state.juries)state.juries=[];
+  if(!state.juryScores)state.juryScores={};
+  // migrate legacy state.scores into juryScores under a default jury if needed
+  if(state.scores&&Object.keys(state.scores).length&&!Object.keys(state.juryScores).length){
+    const legacyId='jury-legacy';
+    if(!state.juries.find(j=>j.id===legacyId)){
+      state.juries.push({id:legacyId,name:'Jury 1',designation:''});
+    }
+    state.juryScores[legacyId]=JSON.parse(JSON.stringify(state.scores));
+    state.activeJuryId=legacyId;
+  }
+  if(!state.activeJuryId&&state.juries.length)state.activeJuryId=state.juries[0].id;
   if(!state.jobs.length){
     state.jobs=[
       {id:uid(),title:'Food & Beverage Head',desc:'Ensure timely, hygienic food service for all participants, volunteers and dignitaries',area:'Dining Area',count:1,assignedTo:'Ashish Saria'},
@@ -1854,6 +1894,58 @@ function saveJob(){
 function deleteJob(id){if(!confirm('Delete this job role?'))return;state.jobs=state.jobs.filter(j=>j.id!==id);save();renderJobs();}
 
 // ===================== SCORING =====================
+// ── Jury helpers ──────────────────────────────────────
+function getJuryScores(juryId){
+  if(!state.juryScores)state.juryScores={};
+  if(!state.juryScores[juryId])state.juryScores[juryId]={};
+  return state.juryScores[juryId];
+}
+function activeJury(){
+  const juries=state.juries||[];
+  if(!juries.length)return null;
+  return juries.find(j=>j.id===state.activeJuryId)||juries[0];
+}
+function openJuryModal(){
+  renderJuryList();
+  openModal('jury-modal');
+}
+function renderJuryList(){
+  const el=document.getElementById('jury-list');
+  const juries=state.juries||[];
+  if(!juries.length){el.innerHTML='<div style="color:var(--muted);font-size:13px">No jury members added yet.</div>';return;}
+  el.innerHTML=juries.map((j,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <span style="font-size:18px">⚖️</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">Jury ${i+1}: ${j.name}</div>
+        <div style="font-size:12px;color:var(--muted)">${j.designation||'—'}</div>
+      </div>
+      <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteJury('${j.id}')">Remove</button>
+    </div>`).join('');
+}
+function addJury(){
+  const name=document.getElementById('jury-name-input').value.trim();
+  const desig=document.getElementById('jury-desig-input').value.trim();
+  if(!name){alert('Enter jury member name');return;}
+  if(!state.juries)state.juries=[];
+  const j={id:uid(),name,designation:desig};
+  state.juries.push(j);
+  if(!state.activeJuryId)state.activeJuryId=j.id;
+  document.getElementById('jury-name-input').value='';
+  document.getElementById('jury-desig-input').value='';
+  save();renderJuryList();renderScoring();
+}
+function deleteJury(id){
+  if(!confirm('Remove this jury member? Their scores will be kept in data but no longer shown.'))return;
+  state.juries=(state.juries||[]).filter(j=>j.id!==id);
+  if(state.activeJuryId===id)state.activeJuryId=(state.juries[0]||{}).id||null;
+  save();renderJuryList();renderScoring();
+}
+function switchJury(id){
+  state.activeJuryId=id;
+  renderScoring();
+}
+// ──────────────────────────────────────────────────────
 function switchScoringDay(d){
   state.scoreDay=d;
   document.getElementById('scoring-day1').style.display=d===1?'block':'none';
@@ -1863,13 +1955,34 @@ function switchScoringDay(d){
   renderScoring();
 }
 function renderScoring(){
+  const juries=state.juries||[];
+  // render jury tabs
+  const tabsEl=document.getElementById('jury-tabs');
+  const infoEl=document.getElementById('jury-active-info');
+  if(tabsEl){
+    if(!juries.length){
+      tabsEl.innerHTML='<span style="font-size:13px;color:var(--muted)">No jury members yet — click ⚖️ Manage Juries to add</span>';
+      if(infoEl)infoEl.textContent='';
+    } else {
+      const aj=activeJury();
+      tabsEl.innerHTML=juries.map((j,i)=>{
+        const active=aj&&j.id===aj.id;
+        return `<button class="btn btn-sm" style="font-size:12px;${active?'background:var(--navy);color:#fff;':'background:var(--card);border:1px solid var(--border);color:var(--text);'}" onclick="switchJury('${j.id}')">Jury ${i+1}: ${j.name}</button>`;
+      }).join('');
+      if(infoEl&&aj)infoEl.textContent=aj.designation?`${aj.name} — ${aj.designation}`:'';
+    }
+  }
   const d=state.scoreDay;
   const tbId=d===1?'score-tbody-day1':'score-tbody-day2';
   const tb=document.getElementById(tbId);
+  if(!tb)return;
   if(!state.students.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Add students first</td></tr>';return;}
+  const aj=activeJury();
+  if(!aj){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Add at least one jury member to start scoring</td></tr>';return;}
+  const juryData=getJuryScores(aj.id);
   const fields=d===1?['govtFormation','mupi','committeePrep']:['questionHour','zeroHour','committeeDisc'];
   tb.innerHTML=state.students.map(s=>{
-    const sc=state.scores[s.id]||{};
+    const sc=juryData[s.id]||{};
     const f1=+sc[fields[0]]||0,f2=+sc[fields[1]]||0,f3=+sc[fields[2]]||0;
     const tot=f1+f2+f3;
     return `<tr>
@@ -1879,26 +1992,23 @@ function renderScoring(){
       <td class="score-cell"><input type="number" min="0" max="10" class="score-input" value="${sc[fields[0]]||''}" oninput="updateScore('${s.id}','${fields[0]}',this.value)" placeholder="0-10"></td>
       <td class="score-cell"><input type="number" min="0" max="10" class="score-input" value="${sc[fields[1]]||''}" oninput="updateScore('${s.id}','${fields[1]}',this.value)" placeholder="0-10"></td>
       <td class="score-cell"><input type="number" min="0" max="10" class="score-input" value="${sc[fields[2]]||''}" oninput="updateScore('${s.id}','${fields[2]}',this.value)" placeholder="0-10"></td>
-      <td class="score-cell"><strong style="color:var(--navy)">${tot||0}</strong></td>
+      <td class="score-cell"><strong style="color:var(--navy)" id="tot-${aj.id}-${s.id}-d${d}">${tot||0}</strong></td>
       <td><input type="text" value="${sc['remarks_d'+d]||''}" oninput="updateScore('${s.id}','remarks_d${d}',this.value)" placeholder="Notes" style="font-size:12px"></td>
     </tr>`;
   }).join('');
 }
 function updateScore(studentId,field,val){
-  if(!state.scores[studentId])state.scores[studentId]={};
-  state.scores[studentId][field]=val;
-  // live update total
-  const sc=state.scores[studentId];
+  const aj=activeJury();
+  if(!aj)return;
+  const juryData=getJuryScores(aj.id);
+  if(!juryData[studentId])juryData[studentId]={};
+  juryData[studentId][field]=val;
+  const sc=juryData[studentId];
   const d=state.scoreDay;
   const fields=d===1?['govtFormation','mupi','committeePrep']:['questionHour','zeroHour','committeeDisc'];
   const tot=(+sc[fields[0]]||0)+(+sc[fields[1]]||0)+(+sc[fields[2]]||0);
-  // find the total cell - it's in the same row
-  const tbId=d===1?'score-tbody-day1':'score-tbody-day2';
-  const rows=document.getElementById(tbId).querySelectorAll('tr');
-  rows.forEach(r=>{
-    const inp=r.querySelector('input[oninput*="'+studentId+'"]');
-    if(inp){const tc=r.querySelectorAll('td')[6];if(tc)tc.innerHTML='<strong style="color:var(--navy)">'+tot+'</strong>';}
-  });
+  const el=document.getElementById(`tot-${aj.id}-${studentId}-d${d}`);
+  if(el)el.textContent=tot;
 }
 function saveScores(){save();alert('Scores saved!');}
 
@@ -2093,18 +2203,42 @@ function deleteChecklistItem(id){if(!confirm('Delete?'))return;state.checklist=s
 // ===================== LEADERBOARD =====================
 function renderLeaderboard(){
   const awards=['1st','2nd','3rd'];
+  const juries=state.juries||[];
+  const juryScores=state.juryScores||{};
+  const fields1=['govtFormation','mupi','committeePrep'];
+  const fields2=['questionHour','zeroHour','committeeDisc'];
   const rows=state.students.map(s=>{
-    const sc=state.scores[s.id]||{};
-    const d1=(+sc.govtFormation||0)+(+sc.mupi||0)+(+sc.committeePrep||0);
-    const d2=(+sc.questionHour||0)+(+sc.zeroHour||0)+(+sc.committeeDisc||0);
-    return{...s,d1,d2,total:d1+d2};
+    // collect scores from all juries that have scored this student
+    let d1vals=[],d2vals=[];
+    juries.forEach(j=>{
+      const jd=(juryScores[j.id]||{})[s.id]||{};
+      const d1v=fields1.reduce((a,f)=>a+(+jd[f]||0),0);
+      const d2v=fields2.reduce((a,f)=>a+(+jd[f]||0),0);
+      if(d1v||d2v){d1vals.push(d1v);d2vals.push(d2v);}
+    });
+    // fallback to legacy state.scores if no jury scores yet
+    if(!d1vals.length&&!d2vals.length){
+      const sc=state.scores&&state.scores[s.id]||{};
+      const d1v=fields1.reduce((a,f)=>a+(+sc[f]||0),0);
+      const d2v=fields2.reduce((a,f)=>a+(+sc[f]||0),0);
+      if(d1v||d2v){d1vals=[d1v];d2vals=[d2v];}
+    }
+    const avg=arr=>arr.length?Math.round(arr.reduce((a,v)=>a+v,0)/arr.length*10)/10:0;
+    const d1=avg(d1vals),d2=avg(d2vals);
+    return{...s,d1,d2,total:Math.round((d1+d2)*10)/10,juryCount:d1vals.length};
   }).sort((a,b)=>b.total-a.total);
   const tb=document.getElementById('leaderboard-tbody');
-  if(!rows.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No students added</td></tr>';return;}
+  if(!rows.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No students added</td></tr>';return;}
+  const juryNote=juries.length?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">Scores averaged across ${juries.length} jury member${juries.length>1?'s':''}.</div>`:'';
+  const tbWrap=tb.closest('.table-wrap');
+  if(tbWrap&&!tbWrap.previousElementSibling?.classList?.contains('jury-note')){
+    const nd=document.createElement('div');nd.className='jury-note';nd.innerHTML=juryNote;tbWrap.before(nd);
+  }
   tb.innerHTML=rows.map((s,i)=>{
     const rank=i+1;
     const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
     const aw=rank<=3?`<span class="badge badge-gold">${awards[i]} Place</span>`:`<span style="color:var(--muted);font-size:12px">Participant</span>`;
+    const scored=s.juryCount?`<span style="font-size:11px;color:var(--muted)">(${s.juryCount} jur${s.juryCount>1?'ies':'y'})</span>`:'';
     return `<tr style="${rank<=3?'background:#fffbeb':''}">
       <td><strong style="font-size:16px">${medal||rank}</strong></td>
       <td><strong>${s.name}</strong></td>
@@ -2112,7 +2246,7 @@ function renderLeaderboard(){
       <td>${s.constituency||'-'}</td>
       <td class="score-cell"><strong>${s.d1}</strong>/30</td>
       <td class="score-cell"><strong>${s.d2}</strong>/30</td>
-      <td class="score-cell"><strong style="font-size:15px;color:var(--navy)">${s.total}</strong>/60</td>
+      <td class="score-cell"><strong style="font-size:15px;color:var(--navy)">${s.total}</strong>/60 ${scored}</td>
       <td>${aw}</td>
     </tr>`;
   }).join('');
