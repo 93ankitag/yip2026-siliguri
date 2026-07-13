@@ -1196,16 +1196,21 @@ function parseTime(t){
 function seedDefaults(){
   if(!state.jobs.length){
     state.jobs=[
-      {id:uid(),title:'Registration Coordinator',desc:'Manage student check-in and badge distribution',area:'Entry/Registration',count:3},
-      {id:uid(),title:'Hall Marshal',desc:'Maintain order in the main debate hall',area:'Main Hall',count:4},
-      {id:uid(),title:'Committee Room In-Charge',desc:'Facilitate committee sessions',area:'Committee Rooms',count:3},
-      {id:uid(),title:'Catering Coordinator',desc:'Manage meal distribution and refreshments',area:'Dining Area',count:2},
-      {id:uid(),title:'AV/Tech Support',desc:'Handle microphones, projector, PA system',area:'Technical Booth',count:2},
-      {id:uid(),title:'Photography/Documentation',desc:'Document the event with photos and videos',area:'Throughout',count:2},
-      {id:uid(),title:'School Liaison',desc:'Point of contact for each school',area:'Entry & Reception',count:3},
-      {id:uid(),title:'Jury Support',desc:'Assist jury members with scoring sheets',area:'Jury Box',count:2},
-      {id:uid(),title:'Time Keeper',desc:'Track time for each session and alert speakers',area:'Main Hall',count:2},
-      {id:uid(),title:'Decoration & Setup',desc:'Set up venue, stage, and decor',area:'Whole Venue',count:3},
+      {id:uid(),title:'Food & Beverage Head',desc:'Ensure timely, hygienic food service for all participants, volunteers and dignitaries',area:'Dining Area',count:1,assignedTo:'Ashish Saria'},
+      {id:uid(),title:'Food & Beverage Team',desc:'Manage food distribution counters, Maggi & Tea stall, water and waste management',area:'Dining Area',count:2,assignedTo:'Nikhil, Sanchit'},
+      {id:uid(),title:'Decorator & Stage Head',desc:'Coordinate stage backdrop, seating, entrance decor and supervise dismantling',area:'Whole Venue',count:1,assignedTo:'Ashish Saria'},
+      {id:uid(),title:'Sound & AV Team',desc:'Arrange microphones, speakers, mixer; conduct sound testing; verify power requirements',area:'Technical Booth',count:2,assignedTo:'Nikhil, Sanchit'},
+      {id:uid(),title:'Logistics & Printing Head',desc:'Manage procurement, printing and movement of all event materials',area:'Throughout',count:1,assignedTo:'Keshav'},
+      {id:uid(),title:'Logistics Team',desc:'Print/cut standees & placards, maintain inventory, support all departments',area:'Throughout',count:3,assignedTo:'Rakesh, Binay, Yash'},
+      {id:uid(),title:'Registration Head',desc:'Provide smooth participant registration, issue kits & lanyards, maintain attendance',area:'Entry/Registration',count:1,assignedTo:'Rakesh'},
+      {id:uid(),title:'Registration Team',desc:'Man registration desk, guide participants and resolve queries',area:'Entry/Registration',count:3,assignedTo:'Keshav, Binay, Yash'},
+      {id:uid(),title:'Dignitaries Head',desc:'Coordinate dignitary invitations, reception and hospitality',area:'Entry & Reception',count:1,assignedTo:'Binay'},
+      {id:uid(),title:'Dignitaries Team',desc:'Receive and escort dignitaries, arrange seating, refreshments and mementos',area:'Entry & Reception',count:3,assignedTo:'Yash, Keshav, Rakesh'},
+      {id:uid(),title:'Branding & Media Head',desc:'Design all creative printables, social media creatives and memento artwork',area:'Throughout',count:1,assignedTo:'Raunak'},
+      {id:uid(),title:'Branding Team',desc:'Coordinate video coverage; provide print-ready artwork to decorators',area:'Throughout',count:1,assignedTo:'Chirag'},
+      {id:uid(),title:'Photographer',desc:'Event photography — opening, sessions, awards, group photos and candids',area:'Throughout',count:1,assignedTo:'Srijana'},
+      {id:uid(),title:'Moderation Head',desc:'Train moderators on parliamentary procedure; oversee all debate sessions',area:'Main Hall',count:1,assignedTo:'Muskan'},
+      {id:uid(),title:'Moderator / Content Team',desc:'Conduct student orientations; manage speaking time, decorum and debate flow',area:'Main Hall',count:8,assignedTo:'Rishab, Megha, Neha, Yamini, Dipesh, Sanchit, Ananya Mitruka, Ipshit'},
     ];
   }
   if(!state.checklist.length || (state.seedVer||0) < 2){
@@ -1283,66 +1288,69 @@ function seedDefaults(){
     state.checklist=items.map(([task,done,phase,assigned,deadline])=>({id:uid(),task,done,phase,assigned,deadline}));
     state.seedVer=2;
   }
-  if(!state.ops.length || (state.opsVer||0) < 1){
+  if(!state.ops.length || (state.opsVer||0) < 2){
+    const prev=state.ops||[];
+    const keep=d=>{ const ex=prev.find(p=>p.id===d.id); return ex?{...d,status:ex.status,notes:ex.notes,tasks:d.tasks.map(t=>{const et=ex.tasks.find(e=>e.id===t.id);return et?{...t,done:et.done}:t;})}:d; };
     state.ops=[
-      {id:'dep-1',name:'Dignitaries',icon:'🎖️',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d1-1',text:'List of MLAs/MPs/VIPs to invite',done:false},
-        {id:'op-d1-2',text:'Draft invitation letter',done:false},
-        {id:'op-d1-3',text:'Send invitations',done:false},
-        {id:'op-d1-4',text:'Confirm attendance',done:false},
-        {id:'op-d1-5',text:'Arrange protocol/seating for VIPs',done:false},
+      keep({id:'dep-1',name:'Dignitaries & Invitations',icon:'🎖️',contact:'Binay',team:'Yash, Keshav, Rakesh, Binay',status:'pending',notes:'',tasks:[
+        {id:'op-d1-1',text:'Prepare and send invitations',done:false},
+        {id:'op-d1-2',text:'Track RSVPs and confirmations',done:false},
+        {id:'op-d1-3',text:'Receive dignitaries and escort them',done:false},
+        {id:'op-d1-4',text:'Coordinate seating and refreshments for dignitaries',done:false},
+        {id:'op-d1-5',text:'Arrange mementos for 4 dignitaries',done:false},
         {id:'op-d1-6',text:'Coordinate with security if needed',done:false}
-      ]},
-      {id:'dep-2',name:'Catering',icon:'🍽️',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d2-1',text:'Finalize vendor and menu',done:false},
-        {id:'op-d2-2',text:'Confirm headcount per meal',done:false},
-        {id:'op-d2-3',text:'Arrange dietary/special meals',done:false},
-        {id:'op-d2-4',text:'Confirm Day 1 lunch count',done:false},
-        {id:'op-d2-5',text:'Confirm Day 2 lunch count',done:false},
-        {id:'op-d2-6',text:'Confirm refreshments/tea breaks',done:false},
-        {id:'op-d2-7',text:'Confirm payment terms',done:false}
-      ]},
-      {id:'dep-3',name:'Awards & Certificates',icon:'🏆',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d3-1',text:'List all 15 YIP awards',done:false},
-        {id:'op-d3-2',text:'Order trophies/medals',done:false},
-        {id:'op-d3-3',text:'Print certificates for all awards',done:false},
-        {id:'op-d3-4',text:'Print participation certificates for all students',done:false},
-        {id:'op-d3-5',text:'Confirm delivery before event',done:false}
-      ]},
-      {id:'dep-4',name:'Decor & Venue Setup',icon:'🎨',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d4-1',text:'Design stage backdrop (YIP/Yi/CII/Thalir branding)',done:false},
-        {id:'op-d4-2',text:'Order/print backdrop',done:false},
+      ]}),
+      keep({id:'dep-2',name:'Food & Beverage',icon:'🍽️',contact:'Ashish Saria',team:'Ashish Saria, Nikhil, Sanchit',status:'pending',notes:'',tasks:[
+        {id:'op-d2-1',text:'Finalize menu, packaging and vendor after approval',done:false},
+        {id:'op-d2-2',text:'Estimate quantity based on registrations + contingency',done:false},
+        {id:'op-d2-3',text:'Plan distribution counters and volunteer deployment',done:false},
+        {id:'op-d2-4',text:'Arrange tables, queue management and signage at food counter',done:false},
+        {id:'op-d2-5',text:'Ensure water, disposable glasses, tissues and waste bins',done:false},
+        {id:'op-d2-6',text:'Separate arrangements for Yi members, volunteers and guests',done:false},
+        {id:'op-d2-7',text:'Coordinate Maggi & Tea stall setup and continuous service',done:false},
+        {id:'op-d2-8',text:'Waste collection and cleanliness around dining areas',done:false}
+      ]}),
+      keep({id:'dep-3',name:'Awards & Certificates',icon:'🏆',contact:'Keshav',team:'Keshav, Rakesh, Binay, Yash',status:'pending',notes:'',tasks:[
+        {id:'op-d3-1',text:'Arrange 15 awards + 1 additional award for Prerana',done:false},
+        {id:'op-d3-2',text:'Print ~150 participation certificates after verification',done:false},
+        {id:'op-d3-3',text:'Arrange 4 mementos for dignitaries',done:false},
+        {id:'op-d3-4',text:'Confirm delivery before event',done:false}
+      ]}),
+      keep({id:'dep-4',name:'Decorator & Stage Setup',icon:'🎨',contact:'Ashish Saria',team:'Ashish Saria, Nikhil, Sanchit',status:'pending',notes:'',tasks:[
+        {id:'op-d4-1',text:'Coordinate with decorators for stage, backdrop, seating and entrance decor',done:false},
+        {id:'op-d4-2',text:'Ensure podium, furniture and branding elements are placed correctly',done:false},
         {id:'op-d4-3',text:'Arrange flowers and stage decor',done:false},
         {id:'op-d4-4',text:'Place directional signages',done:false},
         {id:'op-d4-5',text:'Set up registration desk area',done:false},
-        {id:'op-d4-6',text:'Arrange seating as per plan',done:false}
-      ]},
-      {id:'dep-5',name:'Photography & Videography',icon:'📸',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d5-1',text:'Confirm photographer/videographer',done:false},
+        {id:'op-d4-6',text:'Remain available for setup issues and supervise dismantling',done:false}
+      ]}),
+      keep({id:'dep-5',name:'Photography & Videography',icon:'📸',contact:'Srijana',team:'Srijana (photographer)',status:'pending',notes:'',tasks:[
+        {id:'op-d5-1',text:'Coordinate event video coverage',done:false},
         {id:'op-d5-2',text:'Share shot list (opening, sessions, awards, group photo)',done:false},
         {id:'op-d5-3',text:'Confirm Day 1 coverage',done:false},
         {id:'op-d5-4',text:'Confirm Day 2 coverage',done:false},
-        {id:'op-d5-5',text:'Set deadline for photo delivery',done:false},
+        {id:'op-d5-5',text:'Set deadline for photo and video delivery',done:false},
         {id:'op-d5-6',text:'Arrange candid coverage of sessions',done:false}
-      ]},
-      {id:'dep-6',name:'Branding — Online',icon:'📱',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d6-1',text:'Create event social media plan',done:false},
-        {id:'op-d6-2',text:'Design event announcement post',done:false},
-        {id:'op-d6-3',text:'Post school participation announcements',done:false},
-        {id:'op-d6-4',text:'Schedule Day 1 live updates',done:false},
-        {id:'op-d6-5',text:'Schedule Day 2 live updates',done:false},
-        {id:'op-d6-6',text:'Post awards/results',done:false},
-        {id:'op-d6-7',text:'Post event recap/reel',done:false}
-      ]},
-      {id:'dep-7',name:'Branding — Offline',icon:'🖨️',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d7-1',text:'Design and print banners',done:false},
-        {id:'op-d7-2',text:'Design and print standees',done:false},
-        {id:'op-d7-3',text:'Print roll-up banners for entry',done:false},
-        {id:'op-d7-4',text:'Print stage backdrop',done:false},
-        {id:'op-d7-5',text:'Print name badges (students/volunteers/jury)',done:false},
-        {id:'op-d7-6',text:'Print constituency cards',done:false}
-      ]},
-      {id:'dep-8',name:'Jury Management',icon:'⚖️',contact:'',status:'pending',notes:'',tasks:[
+      ]}),
+      keep({id:'dep-6',name:'Branding & Media',icon:'📱',contact:'Raunak',team:'Raunak, Chirag',status:'pending',notes:'',tasks:[
+        {id:'op-d6-1',text:'Design all creative printables',done:false},
+        {id:'op-d6-2',text:'Prepare social media creatives',done:false},
+        {id:'op-d6-3',text:'Coordinate event video coverage',done:false},
+        {id:'op-d6-4',text:'Provide print-ready artwork to decorators',done:false},
+        {id:'op-d6-5',text:'Finalize memento artwork',done:false},
+        {id:'op-d6-6',text:'Post school participation announcements',done:false},
+        {id:'op-d6-7',text:'Post event recap/reel after event',done:false}
+      ]}),
+      keep({id:'dep-7',name:'Moderation & Content',icon:'🎙️',contact:'Muskan',team:'Muskan, Rishab, Megha, Neha, Yamini, Dipesh, Sanchit, Ananya Mitruka, Ipshit',status:'pending',notes:'',tasks:[
+        {id:'op-d7-1',text:'Train moderators on parliamentary procedure and debate rules',done:false},
+        {id:'op-d7-2',text:'Conduct student orientation on 15th (Prerana)',done:false},
+        {id:'op-d7-3',text:'Conduct student orientation on 17th at 11:00 AM',done:false},
+        {id:'op-d7-4',text:'Conduct student orientation on 18th at 7:00 PM',done:false},
+        {id:'op-d7-5',text:'Coordinate moderation for Topics 4, 6, 8, 9 and 10',done:false},
+        {id:'op-d7-6',text:'Ensure equal participation and manage speaking time',done:false},
+        {id:'op-d7-7',text:'Collect post-session feedback and submit observations',done:false}
+      ]}),
+      keep({id:'dep-8',name:'Jury Management',icon:'⚖️',contact:'',team:'',status:'pending',notes:'',tasks:[
         {id:'op-d8-1',text:'Identify and invite jury members (min 3)',done:false},
         {id:'op-d8-2',text:'Share YIP evaluation criteria with jury',done:false},
         {id:'op-d8-3',text:'Brief jury on scoring parameters',done:false},
@@ -1350,8 +1358,8 @@ function seedDefaults(){
         {id:'op-d8-5',text:'Prepare jury evaluation sheets (Day 2)',done:false},
         {id:'op-d8-6',text:'Arrange jury room/seating',done:false},
         {id:'op-d8-7',text:'Collect signed NDAs/forms',done:false}
-      ]},
-      {id:'dep-9',name:'School & Student Coordination',icon:'🏫',contact:'',status:'pending',notes:'',tasks:[
+      ]}),
+      keep({id:'dep-9',name:'School & Student Coordination',icon:'🏫',contact:'',team:'',status:'pending',notes:'',tasks:[
         {id:'op-d9-1',text:'Send invitations to all schools',done:false},
         {id:'op-d9-2',text:'Collect school confirmation letters/MoUs',done:false},
         {id:'op-d9-3',text:'Confirm participant count per school',done:false},
@@ -1359,34 +1367,33 @@ function seedDefaults(){
         {id:'op-d9-5',text:'Share YIP topic resources with schools',done:false},
         {id:'op-d9-6',text:'Conduct Train the Trainer session',done:false},
         {id:'op-d9-7',text:'Share event schedule with schools',done:false}
-      ]},
-      {id:'dep-10',name:'AV & Technical',icon:'🎙️',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d10-1',text:'Confirm microphones (handheld + lapel)',done:false},
-        {id:'op-d10-2',text:'Confirm projector/screen',done:false},
-        {id:'op-d10-3',text:'Confirm PA/sound system',done:false},
-        {id:'op-d10-4',text:'Test all AV equipment (dry run)',done:false},
-        {id:'op-d10-5',text:'Arrange backup mic',done:false},
-        {id:'op-d10-6',text:'Confirm livestream setup (if any)',done:false},
-        {id:'op-d10-7',text:'Keep tech support on standby both days',done:false}
-      ]},
-      {id:'dep-11',name:'Transport & Logistics',icon:'🚌',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d11-1',text:'Confirm venue accessibility',done:false},
-        {id:'op-d11-2',text:'Arrange parking for buses/cars',done:false},
-        {id:'op-d11-3',text:'Coordinate school bus timings',done:false},
-        {id:'op-d11-4',text:'Arrange transport for jury/dignitaries if needed',done:false},
-        {id:'op-d11-5',text:'Plan emergency transport contact',done:false}
-      ]},
-      {id:'dep-12',name:'Printing & Stationery',icon:'🖨️',contact:'',status:'pending',notes:'',tasks:[
-        {id:'op-d12-1',text:'Print name badges — students',done:false},
-        {id:'op-d12-2',text:'Print name badges — volunteers and jury',done:false},
+      ]}),
+      keep({id:'dep-10',name:'Sound & AV',icon:'🔊',contact:'Ashish Saria',team:'Ashish Saria, Nikhil, Sanchit',status:'pending',notes:'',tasks:[
+        {id:'op-d10-1',text:'Arrange microphones, speakers and mixer',done:false},
+        {id:'op-d10-2',text:'Conduct complete sound testing before event',done:false},
+        {id:'op-d10-3',text:'Confirm projector/screen',done:false},
+        {id:'op-d10-4',text:'Verify power points and extension requirements',done:false},
+        {id:'op-d10-5',text:'Keep tech support on standby both days',done:false},
+        {id:'op-d10-6',text:'Resolve sound or setup issues during event',done:false}
+      ]}),
+      keep({id:'dep-11',name:'Logistics & Transport',icon:'🚌',contact:'Keshav',team:'Keshav, Rakesh, Binay, Yash',status:'pending',notes:'',tasks:[
+        {id:'op-d11-1',text:'Ensure registration kits delivered before registration',done:false},
+        {id:'op-d11-2',text:'Maintain inventory and support all departments',done:false},
+        {id:'op-d11-3',text:'Confirm venue accessibility and parking for buses/cars',done:false},
+        {id:'op-d11-4',text:'Coordinate school bus timings',done:false},
+        {id:'op-d11-5',text:'Arrange transport for jury/dignitaries if needed',done:false}
+      ]}),
+      keep({id:'dep-12',name:'Printing & Stationery',icon:'🖨️',contact:'Keshav',team:'Keshav, Rakesh, Binay, Yash',status:'pending',notes:'',tasks:[
+        {id:'op-d12-1',text:'Print and cut all standees and placards',done:false},
+        {id:'op-d12-2',text:'Print name badges — students, volunteers and jury',done:false},
         {id:'op-d12-3',text:'Print constituency cards',done:false},
         {id:'op-d12-4',text:'Print oath cards',done:false},
         {id:'op-d12-5',text:'Print YIP rules/format handout',done:false},
         {id:'op-d12-6',text:'Print jury evaluation sheets',done:false},
         {id:'op-d12-7',text:'Print Day 1 & Day 2 roll call sheets',done:false},
         {id:'op-d12-8',text:'Print agenda/schedule cards',done:false}
-      ]},
-      {id:'dep-13',name:'Sponsorship & Finance',icon:'💰',contact:'',status:'pending',notes:'',tasks:[
+      ]}),
+      keep({id:'dep-13',name:'Sponsorship & Finance',icon:'💰',contact:'',team:'',status:'pending',notes:'',tasks:[
         {id:'op-d13-1',text:'Prepare event budget',done:false},
         {id:'op-d13-2',text:'Identify potential sponsors',done:false},
         {id:'op-d13-3',text:'Send sponsorship proposals',done:false},
@@ -1394,8 +1401,8 @@ function seedDefaults(){
         {id:'op-d13-5',text:'Track all expenses',done:false},
         {id:'op-d13-6',text:'Arrange petty cash for event day',done:false},
         {id:'op-d13-7',text:'Settle vendor payments post-event',done:false}
-      ]},
-      {id:'dep-14',name:'Documentation & Reporting',icon:'📋',contact:'',status:'pending',notes:'',tasks:[
+      ]}),
+      keep({id:'dep-14',name:'Documentation & Reporting',icon:'📋',contact:'',team:'',status:'pending',notes:'',tasks:[
         {id:'op-d14-1',text:'Assign minutes recorder for sessions',done:false},
         {id:'op-d14-2',text:'Document party formation and portfolios',done:false},
         {id:'op-d14-3',text:'Collect all jury evaluation sheets',done:false},
@@ -1404,9 +1411,9 @@ function seedDefaults(){
         {id:'op-d14-6',text:'Prepare post-event report',done:false},
         {id:'op-d14-7',text:'Archive photos and videos',done:false},
         {id:'op-d14-8',text:'Submit event data to national YIP portal',done:false}
-      ]}
+      ]})
     ];
-    state.opsVer=1;
+    state.opsVer=2;
   }
   if(!state.schedule.length || (state.schedSeedVer||0) < 2){
     const sessions=[
@@ -1806,7 +1813,7 @@ function renderJobs(){
     const assigned=state.volunteers.filter(v=>v.jobId===j.id&&v.status==='confirmed').length;
     const cls=assigned>=j.count?'badge-green':assigned>0?'badge-gold':'badge-red';
     return `<tr>
-      <td>${i+1}</td><td><strong>${j.title}</strong></td>
+      <td>${i+1}</td><td><strong>${j.title}</strong>${j.assignedTo?`<br><span style="font-size:11px;color:var(--green);font-weight:600">👤 ${j.assignedTo}</span>`:''}</td>
       <td style="font-size:12px;color:var(--muted)">${j.desc||'-'}</td>
       <td>${j.area||'-'}</td><td style="text-align:center">${j.count}</td>
       <td style="text-align:center"><span class="badge ${cls}">${assigned}/${j.count}</span></td>
@@ -2450,8 +2457,10 @@ function renderOps(){
         </select>
       </div>
       <div>
-        <input type="text" value="${dep.contact||''}" placeholder="Contact person…" style="width:100%" oninput="saveOpContact('${dep.id}',this.value)">
+        <input type="text" value="${dep.contact||''}" placeholder="Head / Contact person…" style="width:100%" oninput="saveOpContact('${dep.id}',this.value)">
       </div>
+      ${dep.team?`<div style="font-size:11px;color:var(--muted);margin-top:-4px"><span style="font-weight:700">Team:</span> ${dep.team}</div>`:''}
+
       <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:2px">${doneTasks}/${dep.tasks.length} tasks done</div>
       <div class="ops-task-list">
         ${dep.tasks.map(t=>`
