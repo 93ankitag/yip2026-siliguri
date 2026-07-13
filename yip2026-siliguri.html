@@ -813,11 +813,20 @@ textarea{resize:vertical;min-height:80px}
           <tr>
             <th>Rank</th><th>Student</th><th>School</th><th>Constituency</th>
             <th class="score-cell">Day 1</th><th class="score-cell">Day 2</th>
-            <th class="score-cell">Grand Total</th><th>Award</th>
+            <th class="score-cell">Grand Total</th>
           </tr>
         </thead>
         <tbody id="leaderboard-tbody"></tbody>
       </table>
+    </div>
+
+    <!-- Awards Section -->
+    <div style="margin-top:28px">
+      <div class="section-header" style="margin-bottom:16px">
+        <h3>🏆 Awards &amp; Recognition</h3>
+        <span style="font-size:12px;color:var(--muted)">Assign winners — jury decision</span>
+      </div>
+      <div id="awards-grid" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
   </div>
 
@@ -1264,6 +1273,25 @@ function parseTime(t){
 function seedDefaults(){
   if(!state.juries)state.juries=[];
   if(!state.juryScores)state.juryScores={};
+  if(!state.awards||!state.awards.length){
+    state.awards=[
+      {id:'aw-1', name:'Best Parliamentarian Award', desc:'For outstanding overall performance, participation, and adherence to parliamentary conduct', winner:''},
+      {id:'aw-2', name:'Best Speaker Award', desc:'For effectively conducting the session with neutrality, discipline, and control', winner:''},
+      {id:'aw-3', name:'Leadership Excellence Award', desc:'For demonstrating initiative, responsibility, and the ability to guide and influence peers', winner:''},
+      {id:'aw-4', name:'Best Member – Ruling Bench', desc:'For effectively contributing to the governance, presenting policies, and responding in debates', winner:''},
+      {id:'aw-5', name:'Best Member – Opposition Bench', desc:'For holding the government accountable through strong, constructive critique and counter-arguments', winner:''},
+      {id:'aw-6', name:'Best Debater Award', desc:'For delivering clear, structured, and impactful arguments during debates', winner:''},
+      {id:'aw-7', name:'Most Persuasive Policy Advocate', desc:'For effectively influencing opinions through strong policy understanding and communication', winner:''},
+      {id:'aw-8', name:'Best Research & Presentation Award', desc:'For depth of research, clarity of thought, and effective presentation of ideas', winner:''},
+      {id:'aw-9', name:'Innovative Ideas Award', desc:'For proposing creative, practical, and solution-oriented ideas', winner:''},
+      {id:'aw-10', name:'Community Impact Award', desc:'For presenting ideas with strong potential for meaningful societal impact', winner:''},
+      {id:'aw-11', name:'Most Valuable Participant (MVP) Award', desc:'For consistent contribution, active participation, and overall engagement across sessions', winner:''},
+      {id:'aw-12', name:'Team Spirit Award', desc:'For demonstrating collaboration, support, and positive engagement within the team', winner:''},
+      {id:'aw-13', name:'Exemplary Parliamentary Decorum', desc:'Recognises the delegate consistently maintaining decorum, respect, and adherence to parliamentary procedures', winner:''},
+      {id:'aw-14', name:'Independent Voice of the House Award', desc:'For demonstrating independent thinking, balanced perspectives, and meaningful contributions without party alignment', winner:''},
+      {id:'aw-15', name:'Best Constituency Representative Award', desc:'For demonstrating strong research, deep understanding of constituency issues, and effectively linking them to Central Agenda topics', winner:''},
+    ];
+  }
   // migrate legacy state.scores into juryScores under a default jury if needed
   if(state.scores&&Object.keys(state.scores).length&&!Object.keys(state.juryScores).length){
     const legacyId='jury-legacy';
@@ -2268,7 +2296,7 @@ function renderLeaderboard(){
     return{...s,d1,d2,total:Math.round((d1+d2)*10)/10,juryCount:d1vals.length};
   }).sort((a,b)=>b.total-a.total);
   const tb=document.getElementById('leaderboard-tbody');
-  if(!rows.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No students added</td></tr>';return;}
+  if(!rows.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No students added</td></tr>';renderAwards();return;}
   const juryNote=juries.length?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">Scores averaged across ${juries.length} jury member${juries.length>1?'s':''}.</div>`:'';
   const tbWrap=tb.closest('.table-wrap');
   if(tbWrap&&!tbWrap.previousElementSibling?.classList?.contains('jury-note')){
@@ -2277,7 +2305,6 @@ function renderLeaderboard(){
   tb.innerHTML=rows.map((s,i)=>{
     const rank=i+1;
     const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
-    const aw=rank<=3?`<span class="badge badge-gold">${awards[i]} Place</span>`:`<span style="color:var(--muted);font-size:12px">Participant</span>`;
     const scored=s.juryCount?`<span style="font-size:11px;color:var(--muted)">(${s.juryCount} jur${s.juryCount>1?'ies':'y'})</span>`:'';
     return `<tr style="${rank<=3?'background:#fffbeb':''}">
       <td><strong style="font-size:16px">${medal||rank}</strong></td>
@@ -2287,9 +2314,39 @@ function renderLeaderboard(){
       <td class="score-cell"><strong>${s.d1}</strong>/30</td>
       <td class="score-cell"><strong>${s.d2}</strong>/30</td>
       <td class="score-cell"><strong style="font-size:15px;color:var(--navy)">${s.total}</strong>/60 ${scored}</td>
-      <td>${aw}</td>
     </tr>`;
   }).join('');
+  renderAwards();
+}
+
+// ===================== AWARDS =====================
+function renderAwards(){
+  const el=document.getElementById('awards-grid');
+  if(!el)return;
+  const students=state.students||[];
+  const opts=`<option value="">— Not assigned —</option>`+students.map(s=>`<option value="${s.id}">${s.name} (${s.schoolName||''})</option>`).join('');
+  el.innerHTML=(state.awards||[]).map((a,i)=>{
+    const winner=students.find(s=>s.id===a.winner);
+    return `<div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;${winner?'border-left:4px solid var(--green)':''}">
+      <div style="font-size:22px;flex-shrink:0">${i<3?['🥇','🥈','🥉'][i]:'🏆'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px">${a.name}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${a.desc}</div>
+      </div>
+      <div style="flex-shrink:0;min-width:200px">
+        <select style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text)" onchange="assignAward('${a.id}',this.value)">
+          ${opts.replace(`value="${a.winner}"`,`value="${a.winner}" selected`)}
+        </select>
+        ${winner?`<div style="font-size:11px;color:var(--green);font-weight:600;margin-top:3px">✓ ${winner.name}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function assignAward(awardId,studentId){
+  const a=(state.awards||[]).find(x=>x.id===awardId);
+  if(!a)return;
+  a.winner=studentId;
+  save();renderAwards();
 }
 
 // ===================== EVENT DETAILS =====================
