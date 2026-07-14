@@ -696,6 +696,14 @@ body.jury-mode #nav-logout-sidebar{display:none}
       </div>
       <div id="jury-active-info" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
     </div>
+    <!-- Scoring filters -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+      <input type="text" id="score-search" placeholder="Search student name…" oninput="renderScoring()" style="max-width:220px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px">
+      <select id="score-filter-school" onchange="renderScoring()" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;max-width:220px">
+        <option value="">All Schools</option>
+      </select>
+      <span id="score-filter-count" style="font-size:12px;color:var(--muted)"></span>
+    </div>
     <div id="scoring-day1">
       <div class="table-wrap">
         <table id="score-table-day1">
@@ -2079,9 +2087,28 @@ function renderScoring(){
   if(!state.students.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Add students first</td></tr>';return;}
   const aj=activeJury();
   if(!aj){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Add at least one jury member to start scoring</td></tr>';return;}
+
+  // populate school filter
+  const schoolSel=document.getElementById('score-filter-school');
+  if(schoolSel){
+    const cur=schoolSel.value;
+    schoolSel.innerHTML='<option value="">All Schools</option>'+state.schools.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    if(cur)schoolSel.value=cur;
+  }
+
+  // apply filters
+  const search=(document.getElementById('score-search')?.value||'').toLowerCase().trim();
+  const filterSchool=document.getElementById('score-filter-school')?.value||'';
+  let students=state.students;
+  if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search));
+  if(filterSchool)students=students.filter(s=>s.schoolId===filterSchool);
+  const countEl=document.getElementById('score-filter-count');
+  if(countEl)countEl.textContent=students.length<state.students.length?`Showing ${students.length} of ${state.students.length} students`:'';
+
   const juryData=getJuryScores(aj.id);
   const fields=d===1?['govtFormation','mupi','committeePrep']:['questionHour','zeroHour','committeeDisc'];
-  tb.innerHTML=state.students.map(s=>{
+  if(!students.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No students match the filter</td></tr>';return;}
+  tb.innerHTML=students.map(s=>{
     const sc=juryData[s.id]||{};
     const f1=+sc[fields[0]]||0,f2=+sc[fields[1]]||0,f3=+sc[fields[2]]||0;
     const tot=f1+f2+f3;
