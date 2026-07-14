@@ -322,7 +322,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
     <div class="login-tricolor"></div>
     <div class="login-title">YIP 2026 — Siliguri</div>
     <div class="login-sub">Young Indians Parliament · Event Management</div>
-    <input type="password" id="login-pw" class="login-input" placeholder="Team password or 4-digit jury code" onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="password" id="login-pw" class="login-input" placeholder="Team password or 4-digit jury code" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <button class="login-btn" onclick="doLogin()">Enter</button>
     <div class="login-error" id="login-error"></div>
   </div>
@@ -2802,7 +2802,7 @@ function isJurySession(){const s=getSession();return s&&s.role==='jury';}
 function sessionJuryId(){const s=getSession();return s&&s.role==='jury'?s.juryId:null;}
 
 async function doLogin(){
-  const pw=document.getElementById('login-pw').value.trim();
+  const pw=document.getElementById('login-pw').value.replace(/[\s​-‍﻿]/g,'');
   const err=document.getElementById('login-error');
   if(!pw){err.textContent='Please enter password or jury code.';return;}
 
