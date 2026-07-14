@@ -248,6 +248,14 @@ textarea{resize:vertical;min-height:80px}
 .login-error{color:var(--danger);font-size:13px;text-align:center;margin-top:10px;min-height:18px}
 .login-tricolor{height:5px;border-radius:0 0 4px 4px;background:linear-gradient(to right,var(--saffron) 33.3%,#fff 33.3% 66.6%,var(--green) 66.6%);margin-bottom:20px}
 
+/* ── JURY MODE ──────────────────────────────── */
+.jury-hidden{display:none!important}
+body.jury-mode .jury-hidden{display:none!important}
+body:not(.jury-mode) .jury-hidden{display:inline-flex!important}
+#jury-session-badge{display:none}
+body.jury-mode #jury-session-badge{display:inline-flex!important}
+body.jury-mode #nav-logout-sidebar{display:none}
+
 /* ── PRINT ───────────────────────────────────── */
 @media print{#sidebar,#topbar,.btn,button{display:none!important}.page.active{display:block!important}#main{margin-left:0}#main::before{display:none}}
 
@@ -314,7 +322,7 @@ textarea{resize:vertical;min-height:80px}
     <div class="login-tricolor"></div>
     <div class="login-title">YIP 2026 — Siliguri</div>
     <div class="login-sub">Young Indians Parliament · Event Management</div>
-    <input type="password" id="login-pw" class="login-input" placeholder="Enter team password" onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="password" id="login-pw" class="login-input" placeholder="Team password or 4-digit jury code" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">Enter</button>
     <div class="login-error" id="login-error"></div>
   </div>
@@ -409,10 +417,12 @@ textarea{resize:vertical;min-height:80px}
       </div>
       <div class="topbar-actions">
         <span id="sync-status" style="font-size:11px;font-weight:600;letter-spacing:.3px;opacity:.8"></span>
-        <button class="btn btn-outline btn-sm" onclick="hardRefresh()" title="Reload latest data &amp; clear cache" style="font-size:16px;padding:4px 10px">⟳</button>
-        <button class="btn btn-outline btn-sm" onclick="exportData()">&#8595; Export</button>
-        <button class="btn btn-navy btn-sm" onclick="openEventModal()">&#9998; Event Details</button>
-        <button class="btn btn-gold btn-sm" onclick="printPage()">&#128438; Print</button>
+        <span id="jury-session-badge" style="display:none;font-size:12px;font-weight:700;color:var(--navy);background:#e0e7ff;padding:4px 10px;border-radius:6px">⚖️ <span id="jury-session-name"></span></span>
+        <button class="btn btn-outline btn-sm jury-hidden" onclick="hardRefresh()" title="Reload latest data &amp; clear cache" style="font-size:16px;padding:4px 10px">⟳</button>
+        <button class="btn btn-outline btn-sm jury-hidden" onclick="exportData()">&#8595; Export</button>
+        <button class="btn btn-navy btn-sm jury-hidden" onclick="openEventModal()">&#9998; Event Details</button>
+        <button class="btn btn-gold btn-sm jury-hidden" onclick="printPage()">&#128438; Print</button>
+        <button class="btn btn-outline btn-sm" onclick="doLogout()">🚪 Logout</button>
       </div>
     </div>
     <div class="topbar-saffron"></div>
@@ -629,7 +639,7 @@ textarea{resize:vertical;min-height:80px}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="switchScoringDay(1)" id="sd1-btn">Day 1</button>
         <button class="btn btn-navy btn-sm" onclick="switchScoringDay(2)" id="sd2-btn">Day 2</button>
-        <button class="btn btn-outline btn-sm" onclick="openJuryModal()">⚖️ Manage Juries</button>
+        <button class="btn btn-outline btn-sm jury-hidden" onclick="openJuryModal()">⚖️ Manage Juries</button>
         <button class="btn btn-gold btn-sm" onclick="printPage()">Print Scores</button>
       </div>
     </div>
@@ -1008,6 +1018,7 @@ textarea{resize:vertical;min-height:80px}
         <div class="form-row">
           <div class="form-group"><label>Name</label><input type="text" id="jury-name-input" placeholder="e.g. Ramesh Kumar"></div>
           <div class="form-group"><label>Designation</label><input type="text" id="jury-desig-input" placeholder="e.g. Principal, DPS Siliguri"></div>
+          <div class="form-group"><label>4-Digit Login Code</label><input type="text" id="jury-code-input" placeholder="e.g. 1234" maxlength="4" style="width:90px"></div>
         </div>
         <button class="btn btn-primary" onclick="addJury()">Add Jury Member</button>
       </div>
@@ -1988,19 +1999,36 @@ function renderJuryList(){
         <div style="font-weight:700;font-size:14px">Jury ${i+1}: ${j.name}</div>
         <div style="font-size:12px;color:var(--muted)">${j.designation||'—'}</div>
       </div>
+      <div style="text-align:center;min-width:70px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">Login Code</div>
+        <input type="text" maxlength="4" value="${j.code||''}" placeholder="4-digit" style="width:60px;text-align:center;font-size:15px;font-weight:700;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-family:monospace" oninput="updateJuryCode('${j.id}',this.value)">
+      </div>
       <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteJury('${j.id}')">Remove</button>
     </div>`).join('');
+}
+function updateJuryCode(juryId, code){
+  const j=(state.juries||[]).find(x=>x.id===juryId);
+  if(!j)return;
+  // ensure unique
+  const dup=(state.juries||[]).find(x=>x.id!==juryId&&x.code===code&&code.length===4);
+  if(dup){alert('Code '+code+' is already used by '+dup.name+'. Use a different code.');return;}
+  j.code=code;
+  save();
 }
 function addJury(){
   const name=document.getElementById('jury-name-input').value.trim();
   const desig=document.getElementById('jury-desig-input').value.trim();
+  const code=document.getElementById('jury-code-input').value.trim();
   if(!name){alert('Enter jury member name');return;}
+  if(code&&!/^\d{4}$/.test(code)){alert('Code must be exactly 4 digits');return;}
+  if(code&&(state.juries||[]).find(j=>j.code===code)){alert('This code is already used by another jury member');return;}
   if(!state.juries)state.juries=[];
-  const j={id:uid(),name,designation:desig};
+  const j={id:uid(),name,designation:desig,code:code||''};
   state.juries.push(j);
   if(!state.activeJuryId)state.activeJuryId=j.id;
   document.getElementById('jury-name-input').value='';
   document.getElementById('jury-desig-input').value='';
+  document.getElementById('jury-code-input').value='';
   save();renderJuryList();renderScoring();
 }
 function deleteJury(id){
@@ -2028,14 +2056,18 @@ function renderScoring(){
   const tabsEl=document.getElementById('jury-tabs');
   const infoEl=document.getElementById('jury-active-info');
   if(tabsEl){
-    if(!juries.length){
-      tabsEl.innerHTML='<span style="font-size:13px;color:var(--muted)">No jury members yet — click ⚖️ Manage Juries to add</span>';
+    const juryMode=isJurySession();
+    const myJuryId=sessionJuryId();
+    const visibleJuries=juryMode?juries.filter(j=>j.id===myJuryId):juries;
+    if(!visibleJuries.length){
+      tabsEl.innerHTML='<span style="font-size:13px;color:var(--muted)">'+(juryMode?'Your jury session is not configured — contact admin.':'No jury members yet — click ⚖️ Manage Juries to add')+'</span>';
       if(infoEl)infoEl.textContent='';
     } else {
       const aj=activeJury();
-      tabsEl.innerHTML=juries.map((j,i)=>{
+      tabsEl.innerHTML=visibleJuries.map((j,i)=>{
+        const globalIdx=juries.indexOf(j);
         const active=aj&&j.id===aj.id;
-        return `<button class="btn btn-sm" style="font-size:12px;${active?'background:var(--navy);color:#fff;':'background:var(--card);border:1px solid var(--border);color:var(--text);'}" onclick="switchJury('${j.id}')">Jury ${i+1}: ${j.name}</button>`;
+        return `<button class="btn btn-sm" style="font-size:12px;${active?'background:var(--navy);color:#fff;':'background:var(--card);border:1px solid var(--border);color:var(--text);'}" ${juryMode?'disabled style="cursor:default;font-size:12px;background:var(--navy);color:#fff;"':'onclick="switchJury(\''+j.id+'\')"'}>Jury ${globalIdx+1}: ${j.name}</button>`;
       }).join('');
       if(infoEl&&aj)infoEl.textContent=aj.designation?`${aj.name} — ${aj.designation}`:'';
     }
@@ -2764,30 +2796,79 @@ async function sha256(msg){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-function isLoggedIn(){return sessionStorage.getItem('yip-auth')==='1';}
+function isLoggedIn(){return !!sessionStorage.getItem('yip-auth');}
+function getSession(){try{return JSON.parse(sessionStorage.getItem('yip-auth')||'null');}catch(e){return null;}}
+function isJurySession(){const s=getSession();return s&&s.role==='jury';}
+function sessionJuryId(){const s=getSession();return s&&s.role==='jury'?s.juryId:null;}
 
 async function doLogin(){
-  const pw=document.getElementById('login-pw').value;
+  const pw=document.getElementById('login-pw').value.trim();
   const err=document.getElementById('login-error');
-  if(!pw){err.textContent='Please enter the password.';return;}
+  if(!pw){err.textContent='Please enter password or jury code.';return;}
+
+  // Check 4-digit jury code first
+  if(/^\d{4}$/.test(pw)){
+    const jury=(state.juries||[]).find(j=>j.code===pw);
+    if(jury){
+      sessionStorage.setItem('yip-auth',JSON.stringify({role:'jury',juryId:jury.id,juryName:jury.name}));
+      document.getElementById('login-screen').classList.add('hidden');
+      err.textContent='';
+      applySessionMode();
+      state.activeJuryId=jury.id;
+      showPage('scoring');
+      return;
+    } else {
+      err.textContent='Invalid jury code.';
+      document.getElementById('login-pw').value='';
+      return;
+    }
+  }
+
+  // Team / admin password
   const hash=await sha256(pw);
   const auth=state._auth||{};
   const teamHash=auth.teamHash||'2f60c4aa9b89032edfb7088007a027aaf1c63719442f1fd8d7b0de4c88cbd423';
   if(hash===teamHash){
-    sessionStorage.setItem('yip-auth','1');
+    sessionStorage.setItem('yip-auth',JSON.stringify({role:'team'}));
     document.getElementById('login-screen').classList.add('hidden');
     err.textContent='';
+    applySessionMode();
   } else {
-    err.textContent='Incorrect password. Try again.';
+    err.textContent='Incorrect password or code.';
     document.getElementById('login-pw').value='';
+  }
+}
+
+function applySessionMode(){
+  const s=getSession();
+  if(s&&s.role==='jury'){
+    document.body.classList.add('jury-mode');
+    // hide all sidebar nav links except scoring and logout
+    document.querySelectorAll('#sidebar a[id^="nav-"]').forEach(a=>{
+      a.style.display=(a.id==='nav-scoring'||a.id==='nav-logout')?'':'none';
+    });
+    document.querySelectorAll('.nav-section').forEach(el=>el.style.display='none');
+    // show jury badge in topbar
+    document.getElementById('jury-session-badge').style.display='inline-flex';
+    document.getElementById('jury-session-name').textContent=s.juryName;
+  } else {
+    document.body.classList.remove('jury-mode');
+    document.querySelectorAll('#sidebar a[id^="nav-"]').forEach(a=>a.style.display='');
+    document.querySelectorAll('.nav-section').forEach(el=>el.style.display='');
+    document.getElementById('jury-session-badge').style.display='none';
   }
 }
 
 function doLogout(){
   sessionStorage.removeItem('yip-auth');
+  document.body.classList.remove('jury-mode');
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('login-pw').value='';
   document.getElementById('login-error').textContent='';
+  // restore sidebar
+  document.querySelectorAll('#sidebar a[id^="nav-"]').forEach(a=>a.style.display='');
+  document.querySelectorAll('.nav-section').forEach(el=>el.style.display='');
+  document.getElementById('jury-session-badge').style.display='none';
   closeSidebar();
 }
 
@@ -2827,6 +2908,8 @@ async function init(){
     document.getElementById('login-screen').classList.remove('hidden');
   } else {
     document.getElementById('login-screen').classList.add('hidden');
+    applySessionMode();
+    if(isJurySession()){state.activeJuryId=sessionJuryId();showPage('scoring');return;}
   }
   renderDashboard();
   const _td=document.getElementById("topbar-date");if(_td)_td.textContent=state.event.date||"Date TBD";
