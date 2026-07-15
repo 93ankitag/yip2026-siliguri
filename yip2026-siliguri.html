@@ -486,7 +486,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
     </div>
     <div id="students-tab" style="display:none">
       <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-        <input type="text" placeholder="Search by name or school..." id="student-search" oninput="renderStudents()" style="max-width:280px">
+        <input type="text" placeholder="Search by name, school or phone…" id="student-search" oninput="renderStudents()" style="max-width:300px">
         <select id="student-filter-school" onchange="renderStudents()" style="max-width:200px">
           <option value="">All Schools</option>
         </select>
@@ -500,7 +500,8 @@ body.jury-mode #nav-logout-sidebar{display:none}
           <option>Whip</option>
           <option>Other</option>
         </select>
-        <button id="master-edit-btn" class="btn btn-outline btn-sm" onclick="toggleMasterEdit()" style="margin-left:auto">✏️ Master Edit</button>
+        <button class="btn btn-outline btn-sm" onclick="openExportModal()" style="margin-left:auto">⬇️ Export</button>
+        <button id="master-edit-btn" class="btn btn-outline btn-sm" onclick="toggleMasterEdit()">✏️ Master Edit</button>
       </div>
       <div id="master-edit-banner" style="display:none;background:#fff3e0;border:1px solid #e65100;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px;color:#e65100;font-weight:600">
         ✏️ Master Edit ON — click any cell to edit. Changes save automatically.
@@ -943,6 +944,33 @@ body.jury-mode #nav-logout-sidebar{display:none}
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('student-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveStudent()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="overlay" id="export-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><h3>Export Student List</h3></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Select columns to include in export. Export uses current search/filter.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-num" checked> #</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-name" checked> Name</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-school" checked> School</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-class" checked> Class</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-phone" checked> Phone</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-constituency"> Constituency</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-role"> Role</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-party"> Party</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-diet"> Diet</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-notes"> Notes</label>
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:8px">
+      <button class="btn btn-outline" onclick="closeModal('export-modal')">Cancel</button>
+      <button class="btn btn-outline" onclick="exportStudents('excel')" style="color:#1d6f42;border-color:#1d6f42">📊 Excel</button>
+      <button class="btn btn-primary" onclick="exportStudents('pdf')">📄 PDF</button>
     </div>
   </div>
 </div>
@@ -1798,7 +1826,7 @@ function renderStudents(){
   const filterSchool=document.getElementById('student-filter-school')?.value||'';
   const filterRole=document.getElementById('student-filter-role')?.value||'';
   let students=state.students;
-  if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search)||(s.schoolName||'').toLowerCase().includes(search));
+  if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search)||(s.schoolName||'').toLowerCase().includes(search)||(s.phone||'').includes(search));
   if(filterSchool)students=students.filter(s=>s.schoolId===filterSchool);
   if(filterRole)students=students.filter(s=>s.role===filterRole);
   const tb=document.getElementById('students-tbody');
@@ -1852,6 +1880,80 @@ function saveStudent(){
   save();renderStudents();closeModal('student-modal');
 }
 function deleteStudent(id){if(!confirm('Delete this student?'))return;state.students=state.students.filter(s=>s.id!==id);save();renderStudents();}
+
+function getFilteredStudents(){
+  const search=(document.getElementById('student-search')?.value||'').toLowerCase();
+  const filterSchool=document.getElementById('student-filter-school')?.value||'';
+  const filterRole=document.getElementById('student-filter-role')?.value||'';
+  let students=state.students;
+  if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search)||(s.schoolName||'').toLowerCase().includes(search)||(s.phone||'').includes(search));
+  if(filterSchool)students=students.filter(s=>s.schoolId===filterSchool);
+  if(filterRole)students=students.filter(s=>s.role===filterRole);
+  return students;
+}
+
+function openExportModal(){openModal('export-modal');}
+
+function exportStudents(fmt){
+  const cols=[
+    {id:'exp-col-num',    label:'#',            key:'_num'},
+    {id:'exp-col-name',   label:'Name',         key:'name'},
+    {id:'exp-col-school', label:'School',       key:'schoolName'},
+    {id:'exp-col-class',  label:'Class',        key:'class'},
+    {id:'exp-col-phone',  label:'Phone',        key:'phone'},
+    {id:'exp-col-constituency',label:'Constituency',key:'constituency'},
+    {id:'exp-col-role',   label:'Role',         key:'role'},
+    {id:'exp-col-party',  label:'Party',        key:'party'},
+    {id:'exp-col-diet',   label:'Diet',         key:'diet'},
+    {id:'exp-col-notes',  label:'Notes',        key:'notes'},
+  ].filter(c=>document.getElementById(c.id)?.checked);
+  if(!cols.length){alert('Select at least one column.');return;}
+  const students=getFilteredStudents();
+  if(!students.length){alert('No students to export.');return;}
+  const rows=students.map((s,i)=>{
+    const r={};
+    cols.forEach(c=>r[c.label]=c.key==='_num'?i+1:(s[c.key]||''));
+    return r;
+  });
+  if(fmt==='excel'){
+    const script=document.createElement('script');
+    script.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+    script.onload=()=>{
+      const ws=XLSX.utils.json_to_sheet(rows);
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,'Students',ws);
+      XLSX.writeFile(wb,'YIP2026_Students.xlsx');
+    };
+    document.head.appendChild(script);
+  } else {
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload=()=>{
+      const s2=document.createElement('script');
+      s2.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+      s2.onload=()=>{
+        const {jsPDF}=window.jspdf;
+        const doc=new jsPDF({orientation:'landscape'});
+        doc.setFontSize(14);
+        doc.text('YIP 2026 — Siliguri Chapter — Student List',14,14);
+        doc.setFontSize(9);
+        doc.text(`Total: ${students.length} students  |  Exported: ${new Date().toLocaleDateString('en-IN')}`,14,21);
+        doc.autoTable({
+          head:[cols.map(c=>c.label)],
+          body:students.map((s,i)=>cols.map(c=>c.key==='_num'?String(i+1):(s[c.key]||''))),
+          startY:26,
+          styles:{fontSize:9,cellPadding:3},
+          headStyles:{fillColor:[33,150,243],textColor:255,fontStyle:'bold'},
+          alternateRowStyles:{fillColor:[245,245,245]},
+        });
+        doc.save('YIP2026_Students.pdf');
+      };
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(script);
+  }
+  closeModal('export-modal');
+}
 
 // ===================== SCHEDULE =====================
 function switchSchedTab(t){
