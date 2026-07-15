@@ -509,7 +509,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Name</th><th>School</th><th>Phone</th><th>Constituency</th><th>Committee</th><th>Role</th><th>Party</th><th>Actions</th></tr></thead>
+          <thead><tr id="students-thead"><th>#</th><th onclick="sortStudents('name')" style="cursor:pointer;user-select:none">Name <span id="sort-name"></span></th><th onclick="sortStudents('schoolName')" style="cursor:pointer;user-select:none">School <span id="sort-schoolName"></span></th><th onclick="sortStudents('phone')" style="cursor:pointer;user-select:none">Phone <span id="sort-phone"></span></th><th onclick="sortStudents('constituency')" style="cursor:pointer;user-select:none">Constituency <span id="sort-constituency"></span></th><th onclick="sortStudents('committee')" style="cursor:pointer;user-select:none">Committee <span id="sort-committee"></span></th><th onclick="sortStudents('role')" style="cursor:pointer;user-select:none">Role <span id="sort-role"></span></th><th onclick="sortStudents('party')" style="cursor:pointer;user-select:none">Party <span id="sort-party"></span></th><th>Actions</th></tr></thead>
           <tbody id="students-tbody"></tbody>
         </table>
       </div>
@@ -1806,6 +1806,16 @@ function updateStudentSchoolSelects(){
 }
 
 let _masterEdit=false;
+let _sortCol='';
+let _sortDir=1;
+function sortStudents(col){
+  if(_sortCol===col){_sortDir*=-1;}else{_sortCol=col;_sortDir=1;}
+  ['name','schoolName','phone','constituency','committee','role','party'].forEach(c=>{
+    const el=document.getElementById('sort-'+c);
+    if(el)el.textContent=c===_sortCol?(_sortDir===1?' ↑':' ↓'):'';
+  });
+  renderStudents();
+}
 function toggleMasterEdit(){
   _masterEdit=!_masterEdit;
   const btn=document.getElementById('master-edit-btn');
@@ -1831,6 +1841,7 @@ function renderStudents(){
   if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search)||(s.schoolName||'').toLowerCase().includes(search)||(s.phone||'').includes(search));
   if(filterSchool)students=students.filter(s=>s.schoolId===filterSchool);
   if(filterRole)students=students.filter(s=>s.role===filterRole);
+  if(_sortCol){students=[...students].sort((a,b)=>{const av=(a[_sortCol]||'').toString().toLowerCase();const bv=(b[_sortCol]||'').toString().toLowerCase();return av<bv?-_sortDir:av>bv?_sortDir:0;});}
   const tb=document.getElementById('students-tbody');
   if(!students.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No students found</td></tr>';return;}
   const roleColors={'PM Candidate':'badge-gold','Minister':'badge-blue','MP - Ruling':'badge-green','MP - Opposition':'badge-red','Speaker':'badge-blue','Whip':'badge-gray','Other':'badge-gray'};
