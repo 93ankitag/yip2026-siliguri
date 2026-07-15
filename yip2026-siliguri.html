@@ -699,7 +699,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
     </div>
     <!-- Scoring filters -->
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
-      <input type="text" id="score-search" placeholder="Search student name…" oninput="renderScoring()" style="max-width:220px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px">
+      <input type="text" id="score-search" placeholder="Search name or constituency…" oninput="renderScoring()" style="max-width:240px;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px">
       <select id="score-filter-school" onchange="renderScoring()" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;max-width:220px">
         <option value="">All Schools</option>
       </select>
@@ -2202,7 +2202,7 @@ function renderScoring(){
   const search=(document.getElementById('score-search')?.value||'').toLowerCase().trim();
   const filterSchool=document.getElementById('score-filter-school')?.value||'';
   let students=state.students;
-  if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search));
+  if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search)||(s.constituency||'').toLowerCase().includes(search));
   if(filterSchool)students=students.filter(s=>s.schoolId===filterSchool);
   const countEl=document.getElementById('score-filter-count');
   if(countEl)countEl.textContent=students.length<state.students.length?`Showing ${students.length} of ${state.students.length} students`:'';
