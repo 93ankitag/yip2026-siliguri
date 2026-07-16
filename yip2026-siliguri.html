@@ -951,28 +951,53 @@ body.jury-mode #nav-logout-sidebar{display:none}
 
 <!-- Export Modal -->
 <div class="overlay" id="export-modal">
-  <div class="modal" style="max-width:420px">
+  <div class="modal" style="max-width:400px">
     <div class="modal-header"><h3>Export Student List</h3></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Select columns to include in export. Export uses current search/filter.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-num" checked> #</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-name" checked> Name</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-school" checked> School</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-class" checked> Class</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-phone" checked> Phone</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-constituency"> Constituency</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-committee"> Committee</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-role"> Role</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-party"> Party</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-diet"> Diet</label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="exp-col-notes"> Notes</label>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Choose columns to include. Export applies your current search &amp; filter.</p>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px">Basic Info</div>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span># &nbsp;Serial Number</span><input type="checkbox" id="exp-col-num" checked style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>Name</span><input type="checkbox" id="exp-col-name" checked style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>School</span><input type="checkbox" id="exp-col-school" checked style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>Class</span><input type="checkbox" id="exp-col-class" checked style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>Phone</span><input type="checkbox" id="exp-col-phone" checked style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:10px;margin-bottom:4px">YIP Assignment</div>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>Constituency</span><input type="checkbox" id="exp-col-constituency" style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>Committee</span><input type="checkbox" id="exp-col-committee" style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>Party</span><input type="checkbox" id="exp-col-party" style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>Role</span><input type="checkbox" id="exp-col-role" style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:10px;margin-bottom:4px">Other</div>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>Diet</span><input type="checkbox" id="exp-col-diet" style="width:18px;height:18px;cursor:pointer">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+          <span>Notes</span><input type="checkbox" id="exp-col-notes" style="width:18px;height:18px;cursor:pointer">
+        </label>
       </div>
     </div>
     <div class="modal-footer" style="gap:8px">
       <button class="btn btn-outline" onclick="closeModal('export-modal')">Cancel</button>
-      <button class="btn btn-outline" onclick="exportStudents('excel')" style="color:#1d6f42;border-color:#1d6f42">📊 Excel</button>
-      <button class="btn btn-primary" onclick="exportStudents('pdf')">📄 PDF</button>
+      <button class="btn btn-outline" onclick="exportStudents('excel')" style="color:#1d6f42;border-color:#1d6f42;flex:1">📊 Excel</button>
+      <button class="btn btn-primary" onclick="exportStudents('pdf')" style="flex:1">📄 PDF</button>
     </div>
   </div>
 </div>
