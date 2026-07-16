@@ -1957,18 +1957,14 @@ function exportStudents(fmt){
     return r;
   });
   if(fmt==='excel'){
-    const doExcelExport=()=>{
-      const ws=XLSX.utils.json_to_sheet(rows);
-      const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,'Students',ws);
-      XLSX.writeFile(wb,'YIP2026_Students.xlsx');
-    };
-    if(window.XLSX){doExcelExport();return;}
-    const script=document.createElement('script');
-    script.src='https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
-    script.onload=doExcelExport;
-    script.onerror=()=>alert('Failed to load Excel library. Please check your internet connection.');
-    document.head.appendChild(script);
+    const escape=v=>{const s=String(v??'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;};
+    const header=cols.map(c=>escape(c.label)).join(',');
+    const body=rows.map(r=>cols.map(c=>escape(r[c.label])).join(',')).join('\n');
+    const csv='﻿'+header+'\n'+body;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    a.download='YIP2026_Students.csv';
+    a.click();
   } else {
     const script=document.createElement('script');
     script.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
