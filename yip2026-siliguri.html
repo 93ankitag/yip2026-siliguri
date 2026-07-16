@@ -803,7 +803,7 @@ body.team-mode #page-budget,body.team-mode #page-catering{display:none!important
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Vendor</th><th>Amount (₹)</th><th>Paid By</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Vendor</th><th>Total (₹)</th><th>Paid (₹)</th><th>Balance (₹)</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="expenses-tbody"></tbody>
       </table>
     </div>
@@ -1184,6 +1184,28 @@ body.team-mode #page-budget,body.team-mode #page-catering{display:none!important
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('expense-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveExpense()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="overlay" id="payment-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><h3 id="pay-modal-title">Log Payment</h3></div>
+    <div class="modal-body">
+      <input type="hidden" id="pay-exp-id">
+      <input type="hidden" id="pay-id">
+      <div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px" id="pay-exp-summary"></div>
+      <div class="grid-2">
+        <div class="form-group"><label>Date</label><input type="date" id="pay-date"></div>
+        <div class="form-group"><label>Amount (₹)</label><input type="number" id="pay-amount" placeholder="0" min="1"></div>
+      </div>
+      <div class="form-group"><label>Note</label><input type="text" id="pay-note" placeholder="e.g. Advance, Final payment, Token"></div>
+      <div class="form-group"><label>Paid By</label><input type="text" id="pay-paidby" placeholder="Person who paid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('payment-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePayment()">Save Payment</button>
     </div>
   </div>
 </div>
@@ -2340,9 +2362,11 @@ function renderBudget(){
   const budget=+state.budget||0;
   document.getElementById('total-budget-input').value=budget||'';
   const expenses=state.expenses;
+  const paidTotal=e=>(e.payments||[]).reduce((s,p)=>s+(+p.amount||0),0);
+  const expStatus=e=>{const pt=paidTotal(e);if(pt<=0)return'Pending';if(pt>=(+e.amount||0))return'Paid';return'Partial';};
   const spent=expenses.reduce((s,e)=>s+(+e.amount||0),0);
-  const paid=expenses.filter(e=>e.status==='Paid').reduce((s,e)=>s+(+e.amount||0),0);
-  const pending=expenses.filter(e=>e.status==='Pending').reduce((s,e)=>s+(+e.amount||0),0);
+  const paid=expenses.reduce((s,e)=>s+paidTotal(e),0);
+  const pending=spent-paid;
   const remaining=budget-spent;
   const pct=budget?Math.min(Math.round(spent/budget*100),100):0;
   document.getElementById('budget-progress').style.width=pct+'%';
@@ -2350,47 +2374,76 @@ function renderBudget(){
   document.getElementById('budget-label').textContent=budget?`₹${spent.toLocaleString()} spent of ₹${budget.toLocaleString()} (${pct}%) — ₹${remaining.toLocaleString()} remaining`:'Set your total budget above';
   document.getElementById('budget-stats').innerHTML=`
     <div class="stat-card"><div class="label">Total Budget</div><div class="value">₹${budget.toLocaleString()}</div></div>
-    <div class="stat-card"><div class="label">Total Spent</div><div class="value">₹${spent.toLocaleString()}</div></div>
-    <div class="stat-card"><div class="label">Paid</div><div class="value" style="color:var(--success)">₹${paid.toLocaleString()}</div></div>
-    <div class="stat-card"><div class="label">Pending</div><div class="value" style="color:#dc2626">₹${pending.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="label">Total Expenses</div><div class="value">₹${spent.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="label">Total Paid</div><div class="value" style="color:var(--success)">₹${paid.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="label">Balance Due</div><div class="value" style="color:#dc2626">₹${pending.toLocaleString()}</div></div>
   `;
   const f=state.budgetFilter;
   let exps=f==='all'?expenses:expenses.filter(e=>e.category===f);
   const tb=document.getElementById('expenses-tbody');
-  if(!exps.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No expenses found</td></tr>';return;}
-  const statusBadge={Pending:'badge-gold',Paid:'badge-green',Reimbursed:'badge-blue'};
-  tb.innerHTML=exps.map(e=>`<tr>
+  if(!exps.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No expenses found</td></tr>';return;}
+  const statusColor={Pending:'badge-gold',Paid:'badge-green',Partial:'badge-blue'};
+  tb.innerHTML=exps.map(e=>{
+    const pt=paidTotal(e);const total=+e.amount||0;const bal=total-pt;const st=expStatus(e);
+    const payHist=(e.payments||[]).length?`<div style="margin-top:4px;font-size:11px;color:var(--muted)">${(e.payments||[]).map(p=>`${p.date||''} ₹${(+p.amount).toLocaleString()} — ${p.note||'Payment'}${p.paidby?' ('+p.paidby+')':''} <span onclick="deletePayment('${e.id}','${p.id}')" style="cursor:pointer;color:#dc2626;font-size:10px" class="admin-only">✕</span>`).join('<br>')}</div>`:'';
+    return`<tr>
     <td>${e.date||'-'}</td>
     <td><span class="badge badge-blue">${e.category}</span></td>
-    <td>${e.desc||'-'}</td>
+    <td>${e.desc||'-'}${payHist}</td>
     <td>${e.vendor||'-'}</td>
-    <td><strong>₹${(+e.amount||0).toLocaleString()}</strong></td>
-    <td>${e.paidby||'-'}</td>
-    <td><select style="font-size:11px;padding:3px 6px" onchange="updateExpStatus('${e.id}',this.value)">
-      <option ${e.status==='Pending'?'selected':''} value="Pending">Pending</option>
-      <option ${e.status==='Paid'?'selected':''} value="Paid">Paid</option>
-      <option ${e.status==='Reimbursed'?'selected':''} value="Reimbursed">Reimbursed</option>
-    </select></td>
-    <td><button class="btn btn-outline btn-xs" onclick="editExpense('${e.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteExpense('${e.id}')">Del</button></td>
-  </tr>`).join('');
+    <td><strong>₹${total.toLocaleString()}</strong></td>
+    <td style="color:var(--success)">₹${pt.toLocaleString()}</td>
+    <td style="color:${bal>0?'#dc2626':'var(--success)'}"><strong>₹${bal.toLocaleString()}</strong></td>
+    <td><span class="badge ${statusColor[st]||'badge-gray'}">${st}</span></td>
+    <td>
+      ${isTeamSession()?'':` <button class="btn btn-outline btn-xs" style="color:var(--success);border-color:var(--success)" onclick="openPaymentModal('${e.id}')">+ Pay</button>
+      <button class="btn btn-outline btn-xs" onclick="editExpense('${e.id}')">Edit</button>
+      <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteExpense('${e.id}')">Del</button>`}
+    </td>
+  </tr>`;}).join('');
 }
-function updateExpStatus(id,status){const e=state.expenses.find(x=>x.id===id);if(e){e.status=status;save();renderBudget();}}
 function saveBudget(){state.budget=+document.getElementById('total-budget-input').value||0;save();renderBudget();}
 function openExpenseModal(id){
   document.getElementById('exp-modal-title').textContent=id?'Edit Expense':'Add Expense';
-  if(id){const e=state.expenses.find(x=>x.id===id);if(e){document.getElementById('exp-id').value=e.id;document.getElementById('exp-date').value=e.date||'';document.getElementById('exp-cat').value=e.category||'Other';document.getElementById('exp-desc').value=e.desc||'';document.getElementById('exp-vendor').value=e.vendor||'';document.getElementById('exp-amount').value=e.amount||'';document.getElementById('exp-paidby').value=e.paidby||'';document.getElementById('exp-status').value=e.status||'Pending';}}
-  else{['exp-id','exp-desc','exp-vendor','exp-amount','exp-paidby'].forEach(i=>document.getElementById(i).value='');document.getElementById('exp-date').value=new Date().toISOString().split('T')[0];document.getElementById('exp-cat').value='Other';document.getElementById('exp-status').value='Pending';}
+  if(id){const e=state.expenses.find(x=>x.id===id);if(e){document.getElementById('exp-id').value=e.id;document.getElementById('exp-date').value=e.date||'';document.getElementById('exp-cat').value=e.category||'Other';document.getElementById('exp-desc').value=e.desc||'';document.getElementById('exp-vendor').value=e.vendor||'';document.getElementById('exp-amount').value=e.amount||'';document.getElementById('exp-paidby').value=e.paidby||'';}}
+  else{['exp-id','exp-desc','exp-vendor','exp-amount','exp-paidby'].forEach(i=>document.getElementById(i).value='');document.getElementById('exp-date').value=new Date().toISOString().split('T')[0];document.getElementById('exp-cat').value='Other';}
   openModal('expense-modal');
 }
 function editExpense(id){openExpenseModal(id);}
 function saveExpense(){
   const id=document.getElementById('exp-id').value||uid();
-  const e={id,date:v('exp-date'),category:v('exp-cat'),desc:v('exp-desc'),vendor:v('exp-vendor'),amount:v('exp-amount'),paidby:v('exp-paidby'),status:v('exp-status')};
+  const existing=state.expenses.find(x=>x.id===id);
+  const e={id,date:v('exp-date'),category:v('exp-cat'),desc:v('exp-desc'),vendor:v('exp-vendor'),amount:v('exp-amount'),paidby:v('exp-paidby'),payments:existing?existing.payments||[]:[]};
   const idx=state.expenses.findIndex(x=>x.id===id);
   if(idx>=0)state.expenses[idx]=e; else state.expenses.push(e);
   save();renderBudget();closeModal('expense-modal');
 }
 function deleteExpense(id){if(!confirm('Delete this expense?'))return;state.expenses=state.expenses.filter(e=>e.id!==id);save();renderBudget();}
+function openPaymentModal(expId){
+  const e=state.expenses.find(x=>x.id===expId);if(!e)return;
+  const pt=(e.payments||[]).reduce((s,p)=>s+(+p.amount||0),0);
+  const bal=(+e.amount||0)-pt;
+  document.getElementById('pay-exp-id').value=expId;
+  document.getElementById('pay-id').value='';
+  document.getElementById('pay-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('pay-amount').value='';
+  document.getElementById('pay-note').value='';
+  document.getElementById('pay-paidby').value=e.paidby||'';
+  document.getElementById('pay-modal-title').textContent=`Pay — ${e.vendor||e.desc}`;
+  document.getElementById('pay-exp-summary').innerHTML=`<strong>${e.desc||''}</strong> &nbsp;|&nbsp; Total: <strong>₹${(+e.amount||0).toLocaleString()}</strong> &nbsp;|&nbsp; Paid: <span style="color:var(--success)">₹${pt.toLocaleString()}</span> &nbsp;|&nbsp; Balance: <span style="color:#dc2626">₹${bal.toLocaleString()}</span>`;
+  openModal('payment-modal');
+}
+function savePayment(){
+  const expId=document.getElementById('pay-exp-id').value;
+  const e=state.expenses.find(x=>x.id===expId);if(!e)return;
+  if(!e.payments)e.payments=[];
+  const amt=+document.getElementById('pay-amount').value;
+  if(!amt||amt<=0){alert('Enter a valid amount.');return;}
+  const p={id:uid(),date:document.getElementById('pay-date').value,amount:amt,note:document.getElementById('pay-note').value,paidby:document.getElementById('pay-paidby').value};
+  e.payments.push(p);
+  save();renderBudget();closeModal('payment-modal');
+}
+function deletePayment(expId,payId){if(!confirm('Remove this payment?'))return;const e=state.expenses.find(x=>x.id===expId);if(e){e.payments=(e.payments||[]).filter(p=>p.id!==payId);save();renderBudget();}}
 
 // ===================== CHECKLIST =====================
 function switchCheckTab(t){
