@@ -256,6 +256,11 @@ body:not(.jury-mode) .jury-hidden{display:inline-flex!important}
 body.jury-mode #jury-session-badge{display:inline-flex!important}
 body.jury-mode #nav-logout-sidebar{display:none}
 
+/* ── TEAM MODE (read-only) ───────────────────── */
+body.team-mode .admin-only{display:none!important}
+body.team-mode #nav-budget,body.team-mode #nav-catering,body.team-mode #nav-changepw{display:none!important}
+body.team-mode #page-budget,body.team-mode #page-catering{display:none!important}
+
 /* ── PRINT ───────────────────────────────────── */
 @media print{#sidebar,#topbar,.btn,button{display:none!important}.page.active{display:block!important}#main{margin-left:0}#main::before{display:none}}
 
@@ -442,7 +447,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
           <div class="exp-row"><span style="color:var(--muted)">Speaker/Chief Guest</span><strong id="ev-guest">-</strong></div>
           <div class="exp-row"><span style="color:var(--muted)">Contact Person</span><strong id="ev-contact">-</strong></div>
         </div>
-        <button class="btn btn-outline btn-sm" style="margin-top:14px" onclick="openEventModal()">&#9998; Edit Details</button>
+        <button class="btn btn-outline btn-sm admin-only" style="margin-top:14px" onclick="openEventModal()">&#9998; Edit Details</button>
       </div>
       <div class="card card-accent-green">
         <h3>Checklist Progress</h3>
@@ -468,8 +473,8 @@ body.jury-mode #nav-logout-sidebar{display:none}
     <div class="section-header">
       <h3>Schools &amp; Students</h3>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-outline btn-sm" onclick="openSchoolModal()">+ Add School</button>
-        <button class="btn btn-primary btn-sm" onclick="openStudentModal()">+ Add Student</button>
+        <button class="btn btn-outline btn-sm admin-only" onclick="openSchoolModal()">+ Add School</button>
+        <button class="btn btn-primary btn-sm admin-only" onclick="openStudentModal()">+ Add Student</button>
       </div>
     </div>
     <div class="tabs">
@@ -501,7 +506,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
           <option>Other</option>
         </select>
         <button class="btn btn-outline btn-sm" onclick="openExportModal()" style="margin-left:auto">⬇️ Export</button>
-        <button id="master-edit-btn" class="btn btn-outline btn-sm" onclick="toggleMasterEdit()">✏️ Master Edit</button>
+        <button id="master-edit-btn" class="btn btn-outline btn-sm admin-only" onclick="toggleMasterEdit()">✏️ Master Edit</button>
       </div>
       <div id="master-edit-banner" style="display:none;background:#fff3e0;border:1px solid #e65100;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px;color:#e65100;font-weight:600">
         ✏️ Master Edit ON — click any cell to edit. Changes save automatically.
@@ -520,7 +525,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
   <div id="page-schedule" class="page">
     <div class="section-header">
       <h3>Event Schedule</h3>
-      <button class="btn btn-primary btn-sm" onclick="openScheduleModal()">+ Add Session</button>
+      <button class="btn btn-primary btn-sm admin-only" onclick="openScheduleModal()">+ Add Session</button>
     </div>
     <div class="tabs">
       <button class="tab-btn active" onclick="switchSchedTab('day1')">Day 1</button>
@@ -542,7 +547,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
     <div class="section-header">
       <h3>Chapter Execution</h3>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-outline btn-sm" onclick="openIssueModal()">&#9888; Log Issue</button>
+        <button class="btn btn-outline btn-sm admin-only" onclick="openIssueModal()">&#9888; Log Issue</button>
         <button class="btn btn-primary btn-sm" onclick="renderExecution()">&#8635; Refresh</button>
       </div>
     </div>
@@ -596,7 +601,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
     <!-- Issues Log -->
     <div id="exec-issues" style="display:none">
       <div style="margin-bottom:16px">
-        <button class="btn btn-primary btn-sm" onclick="openIssueModal()">+ Log New Issue</button>
+        <button class="btn btn-primary btn-sm admin-only" onclick="openIssueModal()">+ Log New Issue</button>
       </div>
       <div id="issues-list"></div>
     </div>
@@ -607,8 +612,8 @@ body.jury-mode #nav-logout-sidebar{display:none}
     <div class="section-header">
       <h3>Volunteers &amp; Job Assignments</h3>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-outline btn-sm" onclick="openJobModal()">+ Add Job Role</button>
-        <button class="btn btn-primary btn-sm" onclick="openVolunteerModal()">+ Add Volunteer</button>
+        <button class="btn btn-outline btn-sm admin-only" onclick="openJobModal()">+ Add Job Role</button>
+        <button class="btn btn-primary btn-sm admin-only" onclick="openVolunteerModal()">+ Add Volunteer</button>
       </div>
     </div>
     <div class="tabs">
@@ -749,7 +754,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
   <div id="page-catering" class="page">
     <div class="section-header">
       <h3>Catering &amp; Refreshments</h3>
-      <button class="btn btn-primary btn-sm" onclick="openMealModal()">+ Add Meal Plan</button>
+      <button class="btn btn-primary btn-sm admin-only" onclick="openMealModal()">+ Add Meal Plan</button>
     </div>
     <div class="grid-3" id="catering-stats"></div>
     <div class="card" style="margin-bottom:16px">
@@ -774,7 +779,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
   <div id="page-budget" class="page">
     <div class="section-header">
       <h3>Budget &amp; Expenses</h3>
-      <button class="btn btn-primary btn-sm" onclick="openExpenseModal()">+ Add Expense</button>
+      <button class="btn btn-primary btn-sm admin-only" onclick="openExpenseModal()">+ Add Expense</button>
     </div>
     <div class="grid-4" id="budget-stats"></div>
     <div class="card" style="margin-bottom:16px">
@@ -808,7 +813,7 @@ body.jury-mode #nav-logout-sidebar{display:none}
   <div id="page-checklist" class="page">
     <div class="section-header">
       <h3>Master Event Checklist</h3>
-      <button class="btn btn-primary btn-sm" onclick="openChecklistModal()">+ Add Item</button>
+      <button class="btn btn-primary btn-sm admin-only" onclick="openChecklistModal()">+ Add Item</button>
     </div>
     <div class="tabs">
       <button class="tab-btn active" onclick="switchCheckTab('all')">All</button>
@@ -1791,7 +1796,7 @@ function renderSchools(){
       <td>${s.constituency||'-'}</td>
       <td>₹${due.toLocaleString()} / <span style="color:var(--green);font-weight:700">₹${paid.toLocaleString()}</span>${bal>0?` / <span style="color:var(--danger)">₹${bal.toLocaleString()} due</span>`:''}</td>
       <td>${psBadge}${s.paymode?`<br><small style="color:var(--muted)">${s.paymode}${s.paydate?' · '+s.paydate:''}</small>`:''}</td>
-      <td><button class="btn btn-outline btn-xs" onclick="editSchool('${s.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteSchool('${s.id}')">Del</button></td>
+      <td>${isTeamSession()?'':` <button class="btn btn-outline btn-xs" onclick="editSchool('${s.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteSchool('${s.id}')">Del</button>`}</td>
     </tr>`;
   }).join('');
   // Payment summary row
@@ -1897,7 +1902,7 @@ function renderStudents(){
       <td>${s.committee||'-'}</td>
       <td><span class="badge ${roleColors[s.role]||'badge-gray'}">${s.role||'-'}</span></td>
       <td>${s.party||'-'}</td>
-      <td><button class="btn btn-outline btn-xs" onclick="editStudent('${s.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteStudent('${s.id}')">Del</button></td>
+      <td>${isTeamSession()?'':` <button class="btn btn-outline btn-xs" onclick="editStudent('${s.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteStudent('${s.id}')">Del</button>`}</td>
     </tr>`;
   }).join('');
 }
@@ -2021,8 +2026,8 @@ function renderSchedule(){
         <option ${s.status==='done'?'selected':''} value="done">Done</option>
         <option ${s.status==='cancelled'?'selected':''} value="cancelled">Cancelled</option>
       </select>
-      <button class="btn btn-outline btn-xs" onclick="editSchedule('${s.id}')">Edit</button>
-      <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteSchedule('${s.id}')">Del</button>
+      ${isTeamSession()?'':` <button class="btn btn-outline btn-xs" onclick="editSchedule('${s.id}')">Edit</button>
+      <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteSchedule('${s.id}')">Del</button>`}
     </td>
   </tr>`).join('');
 }
@@ -2070,7 +2075,7 @@ function renderVolunteers(){
         <option ${v.status==='not-available'?'selected':''} value="not-available">Not Available</option>
       </select></td>
       <td style="font-size:12px;color:var(--muted)">${v.notes||'-'}</td>
-      <td><button class="btn btn-outline btn-xs" onclick="editVolunteer('${v.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteVolunteer('${v.id}')">Del</button></td>
+      <td>${isTeamSession()?'':` <button class="btn btn-outline btn-xs" onclick="editVolunteer('${v.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteVolunteer('${v.id}')">Del</button>`}</td>
     </tr>`;
   }).join('');
 }
@@ -2086,7 +2091,7 @@ function renderJobs(){
       <td style="font-size:12px;color:var(--muted)">${j.desc||'-'}</td>
       <td>${j.area||'-'}</td><td style="text-align:center">${j.count}</td>
       <td style="text-align:center"><span class="badge ${cls}">${assigned}/${j.count}</span></td>
-      <td><button class="btn btn-outline btn-xs" onclick="editJob('${j.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteJob('${j.id}')">Del</button></td>
+      <td>${isTeamSession()?'':` <button class="btn btn-outline btn-xs" onclick="editJob('${j.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteJob('${j.id}')">Del</button>`}</td>
     </tr>`;
   }).join('');
 }
@@ -2153,7 +2158,7 @@ function renderJuryList(){
         <div style="font-size:11px;color:var(--muted);margin-bottom:2px">Login Code</div>
         <input type="text" maxlength="4" value="${j.code||''}" placeholder="4-digit" style="width:60px;text-align:center;font-size:15px;font-weight:700;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-family:monospace" oninput="updateJuryCode('${j.id}',this.value)">
       </div>
-      <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteJury('${j.id}')">Remove</button>
+      ${isTeamSession()?'':` <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteJury('${j.id}')">Remove</button>`}
     </div>`).join('');
 }
 function updateJuryCode(juryId, code){
@@ -2305,7 +2310,7 @@ function renderCatering(){
     <td>${m.count||'-'}</td><td>₹${m.cost||0}</td>
     <td><strong>₹${((+m.count||0)*(+m.cost||0)).toLocaleString()}</strong></td>
     <td><span class="badge ${statusBadge[m.status]||'badge-gray'}">${m.status}</span></td>
-    <td><button class="btn btn-outline btn-xs" onclick="editMeal('${m.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteMeal('${m.id}')">Del</button></td>
+    <td>${isTeamSession()?'':` <button class="btn btn-outline btn-xs" onclick="editMeal('${m.id}')">Edit</button> <button class="btn btn-xs" style="background:#fee2e2;color:#991b1b" onclick="deleteMeal('${m.id}')">Del</button>`}</td>
   </tr>`).join('');
 }
 function openMealModal(id){
@@ -2969,6 +2974,7 @@ function isLoggedIn(){return !!sessionStorage.getItem('yip-auth');}
 function getSession(){try{return JSON.parse(sessionStorage.getItem('yip-auth')||'null');}catch(e){return null;}}
 function isJurySession(){const s=getSession();return s&&s.role==='jury';}
 function sessionJuryId(){const s=getSession();return s&&s.role==='jury'?s.juryId:null;}
+function isTeamSession(){const s=getSession();return s&&s.role==='team';}
 
 async function doLogin(){
   const pw=document.getElementById('login-pw').value.replace(/[\s​-‍﻿]/g,'');
@@ -2993,11 +2999,17 @@ async function doLogin(){
     }
   }
 
-  // Team / admin password
+  // Admin / team password
   const hash=await sha256(pw);
   const auth=state._auth||{};
-  const teamHash=auth.teamHash||'2f60c4aa9b89032edfb7088007a027aaf1c63719442f1fd8d7b0de4c88cbd423';
-  if(hash===teamHash){
+  const adminHash=auth.adminHash||'69aef7e3c0966db36389edb17453ed7c14c2bc87ca3a9edb70adb3fdc50ebf57';
+  const teamHash=auth.teamHash||'ca04fd1cff45a7cd618f6f96cb813651603775820182f2fd5efe00959b413598';
+  if(hash===adminHash){
+    sessionStorage.setItem('yip-auth',JSON.stringify({role:'admin'}));
+    document.getElementById('login-screen').classList.add('hidden');
+    err.textContent='';
+    applySessionMode();
+  } else if(hash===teamHash){
     sessionStorage.setItem('yip-auth',JSON.stringify({role:'team'}));
     document.getElementById('login-screen').classList.add('hidden');
     err.textContent='';
@@ -3010,18 +3022,21 @@ async function doLogin(){
 
 function applySessionMode(){
   const s=getSession();
+  document.body.classList.remove('jury-mode','team-mode');
   if(s&&s.role==='jury'){
     document.body.classList.add('jury-mode');
-    // hide all sidebar nav links except scoring and logout
     document.querySelectorAll('#sidebar a[id^="nav-"]').forEach(a=>{
       a.style.display=(a.id==='nav-scoring'||a.id==='nav-logout')?'':'none';
     });
     document.querySelectorAll('.nav-section').forEach(el=>el.style.display='none');
-    // show jury badge in topbar
     document.getElementById('jury-session-badge').style.display='inline-flex';
     document.getElementById('jury-session-name').textContent=s.juryName;
+  } else if(s&&s.role==='team'){
+    document.body.classList.add('team-mode');
+    document.querySelectorAll('#sidebar a[id^="nav-"]').forEach(a=>a.style.display='');
+    document.querySelectorAll('.nav-section').forEach(el=>el.style.display='');
+    document.getElementById('jury-session-badge').style.display='none';
   } else {
-    document.body.classList.remove('jury-mode');
     document.querySelectorAll('#sidebar a[id^="nav-"]').forEach(a=>a.style.display='');
     document.querySelectorAll('.nav-section').forEach(el=>el.style.display='');
     document.getElementById('jury-session-badge').style.display='none';
