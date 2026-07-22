@@ -715,7 +715,7 @@ body.team-mode #page-budget,body.team-mode #page-catering{display:none!important
         <table id="score-table-day1">
           <thead>
             <tr>
-              <th>Student</th><th>School</th><th>Constituency</th>
+              <th onclick="sortScoring('name')" style="cursor:pointer;user-select:none">Student<span id="score-sort-d1-name"></span></th><th onclick="sortScoring('schoolName')" style="cursor:pointer;user-select:none">School<span id="score-sort-d1-schoolName"></span></th><th onclick="sortScoring('constituency')" style="cursor:pointer;user-select:none">Constituency<span id="score-sort-d1-constituency"></span></th>
               <th class="score-cell">Govt Formation<br><small style="font-weight:400;color:var(--muted)">/10</small></th>
               <th class="score-cell">MUPI<br><small style="font-weight:400;color:var(--muted)">/10</small></th>
               <th class="score-cell">Committee Prep<br><small style="font-weight:400;color:var(--muted)">/10</small></th>
@@ -732,7 +732,7 @@ body.team-mode #page-budget,body.team-mode #page-catering{display:none!important
         <table id="score-table-day2">
           <thead>
             <tr>
-              <th>Student</th><th>School</th><th>Constituency</th>
+              <th onclick="sortScoring('name')" style="cursor:pointer;user-select:none">Student<span id="score-sort-d2-name"></span></th><th onclick="sortScoring('schoolName')" style="cursor:pointer;user-select:none">School<span id="score-sort-d2-schoolName"></span></th><th onclick="sortScoring('constituency')" style="cursor:pointer;user-select:none">Constituency<span id="score-sort-d2-constituency"></span></th>
               <th class="score-cell">Question Hour<br><small style="font-weight:400;color:var(--muted)">/10</small></th>
               <th class="score-cell">Zero Hour<br><small style="font-weight:400;color:var(--muted)">/10</small></th>
               <th class="score-cell">Committee Disc.<br><small style="font-weight:400;color:var(--muted)">/10</small></th>
@@ -1860,6 +1860,18 @@ function updateStudentSchoolSelects(){
 let _masterEdit=false;
 let _sortCol='';
 let _sortDir=1;
+let _scoreSortCol='';
+let _scoreSortDir=1;
+function sortScoring(col){
+  if(_scoreSortCol===col){_scoreSortDir*=-1;}else{_scoreSortCol=col;_scoreSortDir=1;}
+  ['name','schoolName','constituency'].forEach(c=>{
+    ['score-sort-d1-','score-sort-d2-'].forEach(pfx=>{
+      const el=document.getElementById(pfx+c);
+      if(el)el.textContent=c===_scoreSortCol?(_scoreSortDir===1?' ↑':' ↓'):'';
+    });
+  });
+  renderScoring();
+}
 function sortStudents(col){
   if(_sortCol===col){_sortDir*=-1;}else{_sortCol=col;_sortDir=1;}
   ['name','schoolName','phone','constituency','committee','role','party'].forEach(c=>{
@@ -2271,6 +2283,7 @@ function renderScoring(){
   let students=state.students;
   if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search)||(s.constituency||'').toLowerCase().includes(search));
   if(filterSchool)students=students.filter(s=>s.schoolId===filterSchool);
+  if(_scoreSortCol){students=[...students].sort((a,b)=>{const av=(a[_scoreSortCol]||'').toString().toLowerCase();const bv=(b[_scoreSortCol]||'').toString().toLowerCase();return av<bv?-_scoreSortDir:av>bv?_scoreSortDir:0;});}
   const countEl=document.getElementById('score-filter-count');
   if(countEl)countEl.textContent=students.length<state.students.length?`Showing ${students.length} of ${state.students.length} students`:'';
 
