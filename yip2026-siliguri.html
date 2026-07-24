@@ -709,6 +709,7 @@ body.team-mode #page-budget,body.team-mode #page-catering{display:none!important
         <option value="">All Schools</option>
       </select>
       <span id="score-filter-count" style="font-size:12px;color:var(--muted)"></span>
+      <button class="btn btn-outline" onclick="exportScoringSheet()" style="margin-left:auto;font-size:13px;padding:6px 14px">📄 Export for Manual Scoring</button>
     </div>
     <div id="scoring-day1">
       <div class="table-wrap">
@@ -2033,6 +2034,57 @@ function exportStudents(fmt){
     document.head.appendChild(script);
   }
   closeModal('export-modal');
+}
+
+function exportScoringSheet(){
+  const search=(document.getElementById('score-search')?.value||'').toLowerCase().trim();
+  const filterSchool=document.getElementById('score-filter-school')?.value||'';
+  let students=state.students;
+  if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search)||(s.constituency||'').toLowerCase().includes(search));
+  if(filterSchool)students=students.filter(s=>s.schoolId===filterSchool);
+  if(_scoreSortCol){students=[...students].sort((a,b)=>{const av=(a[_scoreSortCol]||'').toString().toLowerCase();const bv=(b[_scoreSortCol]||'').toString().toLowerCase();return av<bv?-_scoreSortDir:av>bv?_scoreSortDir:0;});}
+  if(!students.length){alert('No students to export.');return;}
+  const loadjsPDF=cb=>{
+    if(window.jspdf){cb();return;}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=()=>{
+      const s2=document.createElement('script');
+      s2.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+      s2.onload=cb;
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+  };
+  loadjsPDF(()=>{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'landscape'});
+    const jury=state.activeJury?(state.juries||[]).find(j=>j.id===state.activeJury):null;
+    const juryLabel=jury?` — Jury: ${jury.name}`:'';
+    const dateLabel=new Date().toLocaleDateString('en-IN');
+    const infoBase=`Students: ${students.length}  |  Date: ${dateLabel}`;
+    const cols=['#','Name','School','Constituency','Committee','Party'];
+    const d1scores=['Govt Formation\n(/10)','MUPI\n(/10)','Committee Prep\n(/10)','Day 1 Total\n(/30)','Remarks'];
+    const d2scores=['Question Hour\n(/10)','Zero Hour\n(/10)','Committee Disc.\n(/10)','Day 2 Total\n(/30)','Remarks'];
+    const bodyRows=students.map((s,i)=>[String(i+1),s.name||'',s.schoolName||'',s.constituency||'',s.committee||'',s.party||'']);
+    const emptyScores=students.map(()=>['','','','','']);
+    const makeBody=()=>bodyRows.map((r,i)=>[...r,...emptyScores[i]]);
+    const tableStyle={styles:{fontSize:8,cellPadding:3,lineWidth:0.3,lineColor:[180,180,180]},headStyles:{fillColor:[33,150,243],textColor:255,fontStyle:'bold',fontSize:8},alternateRowStyles:{fillColor:[245,248,255]},columnStyles:{0:{cellWidth:10},1:{cellWidth:38},2:{cellWidth:38},3:{cellWidth:32},4:{cellWidth:28},5:{cellWidth:25},6:{cellWidth:18},7:{cellWidth:18},8:{cellWidth:18},9:{cellWidth:18},10:{cellWidth:28}}};
+    // Day 1
+    doc.setFontSize(13);doc.setFont(undefined,'bold');
+    doc.text(`YIP 2026 — Siliguri Chapter — Jury Scoring Sheet — Day 1${juryLabel}`,14,14);
+    doc.setFontSize(9);doc.setFont(undefined,'normal');
+    doc.text(infoBase,14,21);
+    doc.autoTable({head:[[...cols,...d1scores]],body:makeBody(),startY:26,...tableStyle});
+    // Day 2
+    doc.addPage();
+    doc.setFontSize(13);doc.setFont(undefined,'bold');
+    doc.text(`YIP 2026 — Siliguri Chapter — Jury Scoring Sheet — Day 2${juryLabel}`,14,14);
+    doc.setFontSize(9);doc.setFont(undefined,'normal');
+    doc.text(infoBase,14,21);
+    doc.autoTable({head:[[...cols,...d2scores]],body:makeBody(),startY:26,...tableStyle});
+    doc.save('YIP2026_ScoringSheet.pdf');
+  });
 }
 
 // ===================== SCHEDULE =====================
