@@ -1968,6 +1968,7 @@ function getFilteredStudents(){
   if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search)||(s.schoolName||'').toLowerCase().includes(search)||(s.phone||'').includes(search));
   if(filterSchool)students=students.filter(s=>s.schoolId===filterSchool);
   if(filterRole)students=students.filter(s=>s.role===filterRole);
+  if(_sortCol){students=[...students].sort((a,b)=>{const av=(a[_sortCol]||'').toString().toLowerCase();const bv=(b[_sortCol]||'').toString().toLowerCase();return av<bv?-_sortDir:av>bv?_sortDir:0;});}
   return students;
 }
 
