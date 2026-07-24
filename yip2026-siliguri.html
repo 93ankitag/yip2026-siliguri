@@ -709,7 +709,8 @@ body.team-mode #page-budget,body.team-mode #page-catering{display:none!important
         <option value="">All Schools</option>
       </select>
       <span id="score-filter-count" style="font-size:12px;color:var(--muted)"></span>
-      <button class="btn btn-outline" onclick="exportScoringSheet()" style="margin-left:auto;font-size:13px;padding:6px 14px">📄 Export for Manual Scoring</button>
+      <button class="btn btn-outline" onclick="exportScoringCSV()" style="margin-left:auto;font-size:13px;padding:6px 14px">📊 Export Excel</button>
+      <button class="btn btn-outline" onclick="exportScoringSheet()" style="font-size:13px;padding:6px 14px">📄 Export PDF</button>
     </div>
     <div id="scoring-day1">
       <div class="table-wrap">
@@ -2085,6 +2086,28 @@ function exportScoringSheet(){
     doc.autoTable({head:[[...cols,...d2scores]],body:makeBody(),startY:26,...tableStyle});
     doc.save('YIP2026_ScoringSheet.pdf');
   });
+}
+
+function exportScoringCSV(){
+  const search=(document.getElementById('score-search')?.value||'').toLowerCase().trim();
+  const filterSchool=document.getElementById('score-filter-school')?.value||'';
+  let students=state.students;
+  if(search)students=students.filter(s=>(s.name||'').toLowerCase().includes(search)||(s.constituency||'').toLowerCase().includes(search));
+  if(filterSchool)students=students.filter(s=>s.schoolId===filterSchool);
+  if(_scoreSortCol){students=[...students].sort((a,b)=>{const av=(a[_scoreSortCol]||'').toString().toLowerCase();const bv=(b[_scoreSortCol]||'').toString().toLowerCase();return av<bv?-_scoreSortDir:av>bv?_scoreSortDir:0;});}
+  if(!students.length){alert('No students to export.');return;}
+  const escape=v=>{const s=String(v??'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;};
+  const day=state.scoreDay||1;
+  const baseCols=['#','Name','School','Constituency','Committee','Party'];
+  const scoreCols=day===1?['Govt Formation (/10)','MUPI (/10)','Committee Prep (/10)','Day 1 Total (/30)','Remarks']:['Question Hour (/10)','Zero Hour (/10)','Committee Disc. (/10)','Day 2 Total (/30)','Remarks'];
+  const allCols=[...baseCols,...scoreCols];
+  const header=allCols.map(escape).join(',');
+  const body=students.map((s,i)=>[i+1,s.name||'',s.schoolName||'',s.constituency||'',s.committee||'',s.party||'',...scoreCols.map(()=>'')].map(escape).join(',')).join('\n');
+  const csv='﻿'+header+'\n'+body;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`YIP2026_ScoringSheet_Day${day}.csv`;
+  a.click();
 }
 
 // ===================== SCHEDULE =====================
